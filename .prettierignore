@@ -1,0 +1,6 @@
+node_modules
+.next
+.netlify
+package-lock.json
+next-env.d.ts
+AGENTS.md
