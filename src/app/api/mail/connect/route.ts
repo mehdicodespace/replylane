@@ -10,6 +10,8 @@ import {
   appURL,
   rateLimit,
   userRef,
+  db,
+  AppError,
 } from "@/lib/server/core";
 import { authorizationURL, importRange } from "@/lib/server/providers";
 export const runtime = "nodejs";
@@ -25,9 +27,11 @@ export async function POST(request: Request) {
         consent: z.literal(true),
       })
       .parse(await jsonBody(request));
-    const owner = await userRef(uid).get();
-    if (owner.data()?.deleting) throw new Error("Account deleting");
-    await userRef(uid).set({ updatedAt: new Date().toISOString() }, { merge: true });
+    await db().runTransaction(async (tx) => {
+      const owner = await tx.get(userRef(uid));
+      if (owner.data()?.deleting) throw new AppError("This account is being deleted.", 409);
+      tx.set(userRef(uid), { updatedAt: new Date().toISOString() }, { merge: true });
+    });
     const state = randomBytes(32).toString("base64url");
     const verifier = randomBytes(48).toString("base64url");
     const response = NextResponse.json({ url: authorizationURL(body.provider, state, verifier) });

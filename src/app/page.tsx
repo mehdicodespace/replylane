@@ -10,7 +10,6 @@ import {
   Mail,
   ShieldCheck,
   Sparkles,
-  Clock3,
   Inbox,
   Video,
   CircleCheck,

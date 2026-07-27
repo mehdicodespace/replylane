@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "evaluate:ai": "vitest run --config vitest.live.config.ts",
+    "format": "prettier --write .",
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
@@ -38,6 +40,7 @@
     "@grpc/grpc-js": "^1.14.6"
   },
   "devDependencies": {
+    "@next/env": "^16.4.2",
     "@types/mailparser": "^3.4.6",
     "@types/node": "^22.18.0",
     "@types/react": "^19.1.0",

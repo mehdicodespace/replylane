@@ -1,8 +1,17 @@
 import type { Config } from "@netlify/functions";
-import { scheduledSync } from "../../src/lib/server/sync";
+import { appURL, env } from "../../src/lib/server/core";
 
 export default async () => {
-  try { await scheduledSync(); }
-  catch { console.error("Scheduled mail sync could not finish; queued work is retained."); }
+  if (process.env.MAIL_PROCESSING_ENABLED !== "true") return;
+  try {
+    const response = await fetch(`${appURL()}/.netlify/functions/sync-mail-background`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env("CRON_SECRET")}` },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) throw new Error("Background dispatch failed");
+  } catch {
+    console.error("Scheduled mail sync could not finish; queued work is retained.");
+  }
 };
-export const config:Config={schedule:"*/15 * * * *"};
+export const config: Config = { schedule: "*/15 * * * *" };

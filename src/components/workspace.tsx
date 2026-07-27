@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Snackbar, Skeleton, Button } from "@mui/material";
+import { Alert, Snackbar, Skeleton, Button, Drawer, useMediaQuery } from "@mui/material";
 import { signOut, sendEmailVerification } from "firebase/auth";
 import {
   ArrowUpRight,
@@ -23,13 +23,11 @@ import {
   Download,
   ChevronDown,
   Sparkles,
-  CircleDot,
   Video,
   Gift,
   Inbox,
   ShieldCheck,
   LogOut,
-  Check,
   CircleHelp,
 } from "lucide-react";
 import { Brand, ThemeToggle } from "./brand";
@@ -78,6 +76,7 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
   const [notice, setNotice] = useState("");
   const [filters, setFilters] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
+  const mobileViewport = useMediaQuery("(max-width:760px)");
   const [error, setError] = useState("");
   const [demoSync, setDemoSync] = useState(false);
   useEffect(() => {
@@ -216,14 +215,12 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
       <a className="skip-link" href="#workspace-main">
         Skip to applications
       </a>
-      {mobileNav && (
-        <button
-          className="nav-backdrop"
-          aria-label="Close navigation"
-          onClick={() => setMobileNav(false)}
-        />
-      )}
-      <aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
+      <Drawer
+        variant={mobileViewport ? "temporary" : "permanent"}
+        open={!mobileViewport || mobileNav}
+        onClose={() => setMobileNav(false)}
+        slotProps={{ paper: { className: "sidebar", "aria-label": "Workspace navigation" } }}
+      >
         <div className="sidebar-brand">
           <Brand />
           <button
@@ -325,7 +322,7 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
             </button>
           )}
         </div>
-      </aside>
+      </Drawer>
       <div className="workspace-body">
         <header className="workspace-header">
           <div>

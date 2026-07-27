@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { authenticate, db, userRef, responseError, jsonBody, adminAuth } from "@/lib/server/core";
+import {
+  authenticate,
+  db,
+  userRef,
+  responseError,
+  jsonBody,
+  adminAuth,
+  hash,
+} from "@/lib/server/core";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
@@ -52,6 +60,11 @@ export async function DELETE(request: Request) {
     await userRef(uid).set({ deleting: true }, { merge: true });
     const connections = await db().collection("connections").where("uid", "==", uid).get();
     for (const connection of connections.docs) await connection.ref.delete();
+    for (const action of ["connect", "sync", "import"])
+      await db()
+        .collection("rateLimits")
+        .doc(hash(`${uid}:${action}`))
+        .delete();
     // Keep the deleting tombstone until Firebase Auth has been removed; no route
     // or worker may recreate data during the cleanup window.
     for (const collection of await userRef(uid).listCollections())
