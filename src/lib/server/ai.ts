@@ -62,6 +62,7 @@ export async function reserveBudget(uid: string, tokens: number) {
       throw new AppError(
         "Your daily import allowance is used. The remaining emails will continue tomorrow.",
         429,
+        "PERSONAL_BUDGET",
       );
     if ((throttle.data()?.until || 0) > Date.now())
       throw new AppError("The AI queue is busy. Your next sync will continue automatically.", 429);

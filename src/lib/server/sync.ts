@@ -242,7 +242,8 @@ export async function scheduledSync(maxMessages = 1) {
         processed += result.processed;
         progress = true;
       } catch (error) {
-        if (error instanceof AppError && error.status === 429) return { processed };
+        if (error instanceof AppError && error.status === 429 && error.code !== "PERSONAL_BUDGET")
+          return { processed };
       }
       if (processed >= maxMessages || Date.now() >= deadline) break;
     }

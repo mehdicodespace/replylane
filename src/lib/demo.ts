@@ -139,8 +139,8 @@ export function createDemoApplications(): Application[] {
   const now = new Date();
   return records.map((r, i) => {
     const date = new Date(now);
-    date.setDate(date.getDate() - r[7]);
-    date.setHours(10, 20 + i, 0, 0);
+    date.setUTCDate(date.getUTCDate() - r[7]);
+    date.setUTCHours(10, 20 + i, 0, 0);
     const deadline = new Date(now);
     deadline.setDate(deadline.getDate() + 3);
     return {

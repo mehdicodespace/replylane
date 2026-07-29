@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect, vi } from "vitest";
+import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
 import { memoryDB } from "./helpers/memory-db";
 import type { Classification, MailInput } from "@/lib/domain";
 import type { ConnectionSecret } from "@/lib/server/providers";
@@ -24,7 +24,7 @@ vi.mock("@/lib/server/providers", () => ({
   microsoftPage: vi.fn(),
   imapPage: vi.fn(),
 }));
-import { recordMail, syncConnection } from "@/lib/server/sync";
+import { recordMail, syncConnection, scheduledSync } from "@/lib/server/sync";
 import { AppError, hash } from "@/lib/server/core";
 const result: Classification = {
   relevant: true,
@@ -75,6 +75,40 @@ beforeEach(() => {
   mocks.accessToken.mockResolvedValue({ access: "access", rotated: null });
 });
 describe("durable mail processing", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  it("continues other users when one user has spent their daily allowance", async () => {
+    vi.stubEnv("MAIL_PROCESSING_ENABLED", "true");
+    mocks.database.state.set("users/bob", {});
+    Object.assign(mocks.database.state.get("connections/c1"), { nextSyncAt: -2 });
+    mocks.database.state.set("connections/c2", {
+      ...connection,
+      uid: "bob",
+      email: "bob@example.com",
+      nextSyncAt: -1,
+    });
+    mocks.gmailPage.mockResolvedValue({ messages: [mail("m1")], cursor: "done", complete: true });
+    mocks.classify
+      .mockRejectedValueOnce(new AppError("Personal daily allowance", 429, "PERSONAL_BUDGET"))
+      .mockResolvedValueOnce(result);
+    expect(await scheduledSync(1)).toEqual({ processed: 1 });
+    expect(mocks.classify).toHaveBeenCalledTimes(2);
+  });
+  it("preserves a pause made while inference was in flight", async () => {
+    mocks.gmailPage.mockResolvedValue({ messages: [mail("m1")], cursor: "done", complete: true });
+    mocks.classify.mockImplementationOnce(async () => {
+      Object.assign(mocks.database.state.get("connections/c1"), {
+        status: "paused",
+        nextSyncAt: Number.MAX_SAFE_INTEGER,
+      });
+      return result;
+    });
+    await expect(syncConnection("c1", "alice")).rejects.toThrow("no longer active");
+    expect(mocks.database.state.get("connections/c1")).toMatchObject({
+      status: "paused",
+      nextSyncAt: Number.MAX_SAFE_INTEGER,
+      lockUntil: 0,
+    });
+  });
   it("records a result and history exactly once for a repeated delivery", async () => {
     await recordMail("alice", "c1", mail("m1"), result);
     await recordMail("alice", "c1", mail("m1"), result);

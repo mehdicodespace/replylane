@@ -76,7 +76,9 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
   const [notice, setNotice] = useState("");
   const [filters, setFilters] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
+  const [clientReady, setClientReady] = useState(false);
   const mobileViewport = useMediaQuery("(max-width:760px)");
+  useEffect(() => setClientReady(true), []);
   const [error, setError] = useState("");
   const [demoSync, setDemoSync] = useState(false);
   useEffect(() => {
@@ -201,7 +203,7 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
   const nextSteps = active.filter((a) => ["interview", "next_step"].includes(a.status));
   const offers = active.filter((a) => a.status === "offer");
   const review = active.filter((a) => a.status === "review");
-  if (!demo && (authLoading || !user))
+  if (demo ? !clientReady : authLoading || !user)
     return (
       <div className="workspace-loading">
         <span className="brand-mark">
@@ -397,8 +399,13 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
               <button
                 className="inline-link"
                 onClick={async () => {
-                  await user!.reload();
-                  window.location.reload();
+                  try {
+                    await user!.reload();
+                    await user!.getIdToken(true);
+                    window.location.reload();
+                  } catch {
+                    setNotice("Verification couldn't be checked. Please try again.");
+                  }
                 }}
               >
                 I’ve verified it

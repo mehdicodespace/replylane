@@ -148,7 +148,8 @@ export function filterApplications(items: Application[], f: Filters) {
       if (f.language !== "all" && a.language !== f.language) return false;
       if (f.connectionId && f.connectionId !== "all" && a.connectionId !== f.connectionId)
         return false;
-      const day = a.receivedAt.slice(0, 10);
+      const received = new Date(a.receivedAt);
+      const day = `${received.getFullYear()}-${String(received.getMonth() + 1).padStart(2, "0")}-${String(received.getDate()).padStart(2, "0")}`;
       if ((f.dateFrom && day < f.dateFrom) || (f.dateTo && day > f.dateTo)) return false;
       return (
         !needle ||
