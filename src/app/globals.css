@@ -5031,6 +5031,14 @@ html[data-theme="dark"] .attention-icon {
     min-height: 40px;
   }
 }
+@media (max-width: 360px) {
+  .marketing-header .nav-actions > .button {
+    display: none;
+  }
+  .workspace-header .header-avatar {
+    display: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
