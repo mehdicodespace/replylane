@@ -14,6 +14,14 @@ The tests cover classification-schema rejection, confidence review routing, unre
 
 They use synthetic fixtures and an in-memory Firestore transaction double. They do not establish real database isolation or live model accuracy.
 
+## Configured service checks
+
+The twelve-case opt-in Groq evaluation passed with the configured hosted model. This is a small synthetic sample, not a general accuracy guarantee. The live evaluation explicitly loads local Groq and AI settings with Vite, including when Vitest runs in test mode.
+
+Firebase was configured on the Spark plan with Email/Password and Google sign-in, a registered web client, and a Standard Firestore database in Europe. Server access to Auth and Firestore passed. The scheduled-sync composite index was created and its query passed on the actual database. The database starts with production rules denying direct client reads and writes.
+
+A real Google sign-in opened the live workspace. A custom-domain mailbox connected over verified TLS IMAP on port 993. Its initial new-mail-only sync completed, saved its live cursor, and reported no error. Stored credentials were checked to be encrypted. No historical messages were imported; classification of an actual newly received job response remains to be observed. Groq Global Zero Data Retention was enabled in the console before connecting the mailbox.
+
 ## Browser review
 
 The production-built application was reviewed through the browser at a 1440×1000 desktop viewport and 390×844 phone viewport. Compact landing navigation was also checked at 375px and 320px widths.
@@ -34,12 +42,12 @@ Screenshots are in `docs/images/`. Their inboxes, companies, and messages are il
 
 ## Still needs a configured staging deployment
 
-- Real Firebase sign-up, verification email, reset email, and revoked-token behavior.
+- Email/password sign-up, verification email, reset email, and revoked-token behavior.
 - Real Google/Microsoft consent and token refresh.
-- Your hosting provider’s IMAP login, TLS behavior, folder coverage, and UID transitions.
-- Firestore rules/index deployment and concurrent transaction behavior on the actual service.
+- IMAP UID transitions and a newly received job response. IMAP currently checks Inbox only.
+- Concurrent transaction behavior on the actual Firestore service.
 - Netlify background dispatch, scheduled execution with the browser closed, and hosting-plan limits.
-- The opt-in twelve-case live Groq evaluation and a broader set of representative multilingual examples.
+- A broader set of representative multilingual classification examples.
 - Real account export/deletion and any operator backup/retention process.
 
-No production mailbox, AI key, Firebase service account, GitHub remote, or Netlify account was supplied during this build. No real email was read or sent, and no live deployment or model-accuracy result is claimed.
+Service credentials are kept in the ignored local environment file and are excluded from the source archive and Git history. A public Netlify deployment and unattended scheduled execution have not yet been verified. No email was sent by Replylane.
