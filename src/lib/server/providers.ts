@@ -36,6 +36,10 @@ export interface ConnectionSecret {
   liveCursor?: string | null;
   lastPhase?: "live" | "import";
   until?: string;
+  importDays?: number;
+  importStartedAt?: string;
+  importChecked?: number;
+  importMatched?: number;
 }
 export const tokenContext = (uid: string, id: string) => `mail:${uid}:${id}`;
 const oauthConfig = (provider: "google" | "microsoft") =>

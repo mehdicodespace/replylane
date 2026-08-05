@@ -34,6 +34,7 @@ The demo is deliberately separate from real accounts. It makes no AI calls and d
 - Encrypted IMAP connections for Yahoo, iCloud, Fastmail, and custom-domain mail.
 - `.eml` import for an individual email from another provider.
 - New mail only, or a bounded import of the last 30 or 60 days.
+- Import older emails from an existing connection, with live counts, retry status, and date range visible in the app.
 - A scheduled worker, durable checkpoints, duplicate receipts, retries, and shared AI budgets.
 - CSV export, connection pause/disconnect, and account deletion.
 
@@ -44,6 +45,8 @@ Interviews and assessments share the **Moving forward** board column, with disti
 The integration code is included, but live accounts require your service configuration. Follow [SETUP.md](docs/SETUP.md) for Firebase, Groq, mailbox providers, and Netlify. Keep secrets in environment variables. Start with your own account before opening registration to other people.
 
 For a custom address such as `work@your-domain.com`, select **Other / custom domain (IMAP)**. Use the IMAP server supplied by your mail host, TLS port 993, and its app password. SMTP is not required. IMAP currently checks **Inbox**; it does not scan every custom folder.
+
+If you started with new emails only, open **Connected inboxes → Import older emails** and choose 30 or 60 days. The inbox card shows progress while application cards appear as replies are found. The app continues queued work while it is open; Netlify's scheduled worker handles unattended imports once deployed. Imports respect the per-account and shared AI budgets, so a large mailbox may take more than one day.
 
 ## Why this stack
 

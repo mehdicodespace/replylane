@@ -77,6 +77,14 @@ export interface Connection {
   processed: number;
   importComplete: boolean;
   error: string | null;
+  since?: string;
+  createdAt?: string;
+  importDays?: number;
+  importStartedAt?: string;
+  importChecked?: number;
+  importMatched?: number;
+  syncing?: boolean;
+  nextSyncAt?: number;
 }
 export const applicationPatchSchema = z
   .object({

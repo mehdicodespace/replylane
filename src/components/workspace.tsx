@@ -114,10 +114,46 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
       }
       return initial;
     },
-    refetchInterval: 30000,
+    refetchInterval: (query) =>
+      query.state.data?.connections.some((c) => !c.importComplete || c.syncing) ? 5000 : 30000,
   });
+  useEffect(() => {
+    if (demo || !user?.emailVerified) return;
+    let stopped = false;
+    let running = false;
+    async function tick() {
+      if (stopped || running || document.hidden) return;
+      const data = queryClient.getQueryData<WorkspaceData>(["workspace", user?.uid]);
+      const due = data?.connections
+        .filter(
+          (c) =>
+            c.provider !== "import" &&
+            c.status === "connected" &&
+            !c.syncing &&
+            (c.nextSyncAt || 0) <= Date.now(),
+        )
+        .sort((a, b) => (a.nextSyncAt || 0) - (b.nextSyncAt || 0))[0];
+      if (!due) return;
+      running = true;
+      try {
+        await api("/api/mail/sync", { method: "POST", body: JSON.stringify({ id: due.id }) });
+      } catch {
+        // The server retains queued work and exposes retry/allowance details on
+        // the inbox card. Another tab or the hosted worker may own the lease.
+      } finally {
+        await queryClient.invalidateQueries({ queryKey: ["workspace", user?.uid] });
+        running = false;
+      }
+    }
+    const timer = setInterval(() => void tick(), 12000);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [demo, user?.uid, user?.emailVerified, queryClient]);
   const applications = demo ? demoState.applications : live.data?.applications || [];
   const connections = demo ? demoConnections : live.data?.connections || [];
+  const pendingImports = connections.filter((c) => !c.importComplete);
   const active = applications.filter((a) => !a.archived);
   const mutation = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: ApplicationPatch }) =>
@@ -430,6 +466,24 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
               }
             >
               {error || (live.error as Error)?.message}
+            </Alert>
+          )}
+          {!demo && section !== "connections" && pendingImports.length > 0 && (
+            <Alert
+              severity={pendingImports.some((c) => c.error) ? "warning" : "info"}
+              className="workspace-alert"
+              action={
+                <Button color="inherit" size="small" onClick={() => go("connections")}>
+                  View progress
+                </Button>
+              }
+            >
+              {pendingImports.some((c) => c.error)
+                ? "Email import is waiting to retry."
+                : "Importing earlier emails."}{" "}
+              {pendingImports.reduce((n, c) => n + (c.importChecked || 0), 0)} checked ·{" "}
+              {pendingImports.reduce((n, c) => n + (c.importMatched || 0), 0)} application replies
+              found.
             </Alert>
           )}
           {section === "connections" ? (

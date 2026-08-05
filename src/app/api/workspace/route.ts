@@ -36,6 +36,14 @@ export async function GET(request: Request) {
         processed: c.processed,
         importComplete: c.importComplete,
         error: c.error,
+        since: c.since,
+        createdAt: c.createdAt,
+        importDays: c.importDays || 0,
+        importStartedAt: c.importStartedAt || null,
+        importChecked: c.importChecked || 0,
+        importMatched: c.importMatched || 0,
+        syncing: c.lockUntil > Date.now(),
+        nextSyncAt: c.nextSyncAt || 0,
       };
     });
     return NextResponse.json(

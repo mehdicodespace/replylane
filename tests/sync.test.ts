@@ -26,6 +26,7 @@ vi.mock("@/lib/server/providers", () => ({
 }));
 import { recordMail, syncConnection, scheduledSync } from "@/lib/server/sync";
 import { AppError, hash } from "@/lib/server/core";
+import { requestHistoryImport } from "@/lib/server/history";
 const result: Classification = {
   relevant: true,
   relevanceConfidence: 0.99,
@@ -76,6 +77,65 @@ beforeEach(() => {
 });
 describe("durable mail processing", () => {
   afterEach(() => vi.unstubAllEnvs());
+  it("starts a bounded import without resetting the new-mail cursor or existing results", async () => {
+    Object.assign(mocks.database.state.get("connections/c1"), { liveCursor: "live-position" });
+    mocks.database.state.set("users/alice/applications/kept", { notes: "Keep this" });
+    const before = Date.now();
+    await requestHistoryImport("c1", "alice", 60);
+    const c = mocks.database.state.get("connections/c1");
+    expect(c).toMatchObject({
+      createdAt: connection.createdAt,
+      liveCursor: "live-position",
+      cursor: null,
+      importComplete: false,
+      importDays: 60,
+      importChecked: 0,
+      importMatched: 0,
+      lastPhase: "live",
+    });
+    expect(new Date(c.since).getTime()).toBeGreaterThanOrEqual(before - 60 * 86400000);
+    expect(new Date(c.since).getTime()).toBeLessThanOrEqual(Date.now() - 60 * 86400000);
+    expect(mocks.database.state.get("users/alice/applications/kept").notes).toBe("Keep this");
+    await expect(requestHistoryImport("c1", "alice", 30)).rejects.toThrow("already in progress");
+  });
+  it("refuses history changes for other users, paused inboxes, deleted accounts and active leases", async () => {
+    await expect(requestHistoryImport("c1", "bob", 60)).rejects.toThrow("Mailbox not found");
+    Object.assign(mocks.database.state.get("connections/c1"), { status: "paused" });
+    await expect(requestHistoryImport("c1", "alice", 60)).rejects.toThrow("Resume or reconnect");
+    Object.assign(mocks.database.state.get("connections/c1"), {
+      status: "connected",
+      lockUntil: Date.now() + 60000,
+    });
+    await expect(requestHistoryImport("c1", "alice", 60)).rejects.toThrow("sync is running");
+    mocks.database.state.set("users/alice", { deleting: true });
+    await expect(requestHistoryImport("c1", "alice", 60)).rejects.toThrow("Account unavailable");
+  });
+  it("reports import progress without counting an already processed email twice", async () => {
+    Object.assign(mocks.database.state.get("connections/c1"), {
+      since: "2026-09-01T00:00:00.000Z",
+      importComplete: false,
+      lastPhase: "live",
+      liveCursor: "keep-live",
+      importChecked: 0,
+      importMatched: 0,
+    });
+    mocks.gmailPage.mockResolvedValue({
+      messages: [mail("older", "2026-10-01T10:00:00.000Z")],
+      cursor: "history-page",
+      complete: false,
+    });
+    await syncConnection("c1", "alice");
+    expect(mocks.database.state.get("connections/c1")).toMatchObject({
+      importChecked: 1,
+      importMatched: 1,
+      liveCursor: "keep-live",
+      cursor: "history-page",
+    });
+    Object.assign(mocks.database.state.get("connections/c1"), { nextSyncAt: 0, lastPhase: "live" });
+    await syncConnection("c1", "alice");
+    expect(mocks.classify).toHaveBeenCalledTimes(1);
+    expect(mocks.database.state.get("connections/c1").importChecked).toBe(1);
+  });
   it("continues other users when one user has spent their daily allowance", async () => {
     vi.stubEnv("MAIL_PROCESSING_ENABLED", "true");
     mocks.database.state.set("users/bob", {});
@@ -110,8 +170,13 @@ describe("durable mail processing", () => {
     });
   });
   it("records a result and history exactly once for a repeated delivery", async () => {
-    await recordMail("alice", "c1", mail("m1"), result);
-    await recordMail("alice", "c1", mail("m1"), result);
+    await recordMail("alice", "c1", mail("m1"), result, "import");
+    await recordMail("alice", "c1", mail("m1"), result, "import");
+    expect(mocks.database.state.get("connections/c1")).toMatchObject({
+      processed: 1,
+      importChecked: 1,
+      importMatched: 1,
+    });
     expect(
       [...mocks.database.state.keys()].filter((k: string) => k.includes("/receipts/")),
     ).toHaveLength(1);

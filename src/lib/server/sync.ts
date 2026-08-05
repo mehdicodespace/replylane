@@ -15,6 +15,7 @@ export async function recordMail(
   connectionId: string,
   mail: MailInput,
   result: Classification,
+  phase?: "live" | "import",
 ) {
   const receipt = userRef(uid)
     .collection("receipts")
@@ -44,6 +45,18 @@ export async function recordMail(
       relevant: result.relevant,
       promptVersion: PROMPT_VERSION,
     });
+    if (phase) {
+      const c = connection.data()!;
+      tx.update(connection.ref, {
+        processed: (c.processed || 0) + 1,
+        ...(phase === "import"
+          ? {
+              importChecked: (c.importChecked || 0) + 1,
+              importMatched: (c.importMatched || 0) + Number(result.relevant),
+            }
+          : {}),
+      });
+    }
     if (!result.relevant) return;
     const existing = current.data() as Application | undefined;
     const latest = !existing || mail.receivedAt >= existing.receivedAt;
@@ -138,7 +151,7 @@ export async function syncConnection(id: string, expectedUID?: string) {
       // processed page stays put; receipts skip its earlier messages on retry.
       if (processed >= 1) break;
       const result = await classify(mail, connection.uid);
-      await recordMail(connection.uid, id, mail, result);
+      await recordMail(connection.uid, id, mail, result, phase);
       processed++;
     }
     const receipts = await Promise.all(
@@ -171,7 +184,6 @@ export async function syncConnection(id: string, expectedUID?: string) {
             : { cursor: page.cursor, importComplete: page.complete }
           : {}),
         lastPhase: phase,
-        processed: connection.processed + processed,
         lastSyncAt: new Date().toISOString(),
         error: null,
         failures: 0,

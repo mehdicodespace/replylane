@@ -13,6 +13,7 @@ import {
   Checkbox,
   FormControlLabel,
   CircularProgress,
+  LinearProgress,
 } from "@mui/material";
 import {
   Mail,
@@ -28,7 +29,7 @@ import {
   Check,
   Clock3,
 } from "lucide-react";
-import type { Connection } from "@/lib/domain";
+import { displayDate, type Connection } from "@/lib/domain";
 import { api, clientAuth } from "@/lib/firebase-client";
 
 const providerNames: Record<string, string> = {
@@ -60,10 +61,31 @@ export function Connections({
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [disconnect, setDisconnect] = useState<Connection | null>(null);
+  const [history, setHistory] = useState<Connection | null>(null);
+  const [historyDays, setHistoryDays] = useState(60);
+  const [historyConsent, setHistoryConsent] = useState(false);
   const [host, setHost] = useState("");
   const [username, setUsername] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
   const imap = ["yahoo", "icloud", "fastmail", "custom"].includes(provider);
+  async function startHistory() {
+    if (!history) return;
+    setBusy(history.id);
+    setError("");
+    try {
+      await api(`/api/mail/${history.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ historyDays, consent: historyConsent }),
+      });
+      setHistory(null);
+      onRefresh();
+      onNotice(`Importing the last ${historyDays} days. Watch progress on this inbox card.`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy("");
+    }
+  }
   async function connect() {
     setError("");
     setBusy("connect");
@@ -229,9 +251,55 @@ export function Connections({
                 </span>
                 <span>
                   <Check size={14} />
-                  {c.processed} emails checked ·{" "}
-                  {c.importComplete ? "Up to date with import" : "Import in progress"}
+                  {c.processed} emails checked
                 </span>
+              </div>
+              <div className="import-progress" aria-live="polite">
+                <strong>
+                  {c.syncing
+                    ? "Checking emails…"
+                    : c.status === "paused"
+                      ? "Sync paused"
+                      : c.error
+                        ? "Waiting to retry"
+                        : !c.importComplete
+                          ? "Import in progress"
+                          : "Watching for new emails"}
+                </strong>
+                {c.since && (
+                  <p>
+                    {c.importStartedAt ||
+                    !c.importComplete ||
+                    (c.createdAt && c.since < c.createdAt)
+                      ? `History from ${displayDate(c.since)} · new emails included`
+                      : "New emails only · earlier messages have not been scanned"}
+                  </p>
+                )}
+                {(c.importStartedAt || !c.importComplete) && (
+                  <>
+                    <p>
+                      {c.importChecked || 0} older emails checked · {c.importMatched || 0}{" "}
+                      application replies found
+                    </p>
+                    {!c.importComplete && c.status === "connected" && !c.error && (
+                      <LinearProgress aria-label="Import in progress" />
+                    )}
+                    <p>
+                      {c.importComplete
+                        ? "History import complete."
+                        : "Replies appear in Applications as they are found. Processing follows your daily AI allowance."}
+                    </p>
+                  </>
+                )}
+                {c.status === "connected" && c.nextSyncAt && c.nextSyncAt > Date.now() && (
+                  <p>
+                    Next check:{" "}
+                    {new Date(c.nextSyncAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                )}
               </div>
               {c.error && (
                 <Alert severity="warning" className="connection-error">
@@ -270,6 +338,20 @@ export function Connections({
                   <Unplug size={16} />
                 </button>
               </div>
+              <button
+                className="text-link history-import-button"
+                disabled={
+                  demo || !!busy || c.status !== "connected" || !c.importComplete || c.syncing
+                }
+                onClick={() => {
+                  setHistory(c);
+                  setHistoryDays(60);
+                  setHistoryConsent(false);
+                  setError("");
+                }}
+              >
+                <Clock3 size={14} /> Import older emails
+              </button>
             </article>
           ))}
         <button
@@ -328,7 +410,9 @@ export function Connections({
         <p>
           Replylane never sends, deletes, or marks messages as read. Relevant text is processed by
           Groq after you give consent. Only application results and short excerpts are saved. IMAP
-          currently checks the Inbox folder; OAuth connections include received mail across folders.
+          currently checks the Inbox folder; OAuth connections include received mail across folders.{" "}
+          Keep this app open to continue a local import. Once hosted, the scheduled worker can
+          continue while you are away.
         </p>
       </div>
       <Dialog open={dialog} onClose={() => !busy && setDialog(false)} maxWidth="sm" fullWidth>
@@ -495,6 +579,53 @@ export function Connections({
             </Button>
           </DialogActions>
         )}
+      </Dialog>
+      <Dialog open={!!history} onClose={() => !busy && setHistory(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>Include earlier replies</DialogTitle>
+        <DialogContent>
+          <div className="connect-form">
+            {error && <Alert severity="error">{error}</Alert>}
+            <p>
+              Import recent messages from {history?.email}. Your existing cards and notes stay in
+              place, and new emails keep syncing.
+            </p>
+            <TextField
+              select
+              fullWidth
+              label="History to include"
+              value={historyDays}
+              onChange={(e) => setHistoryDays(Number(e.target.value))}
+            >
+              <MenuItem value={30}>Last 30 days</MenuItem>
+              <MenuItem value={60}>Last 60 days</MenuItem>
+            </TextField>
+            <p className="muted small">
+              Messages are checked gradually within your AI allowance. Already checked emails are
+              skipped. Only job application responses appear on your board.
+            </p>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={historyConsent}
+                  onChange={(e) => setHistoryConsent(e.target.checked)}
+                />
+              }
+              label="Process emails in this date range using Groq to identify application responses."
+            />
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHistory(null)} disabled={!!busy}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={!historyConsent || !!busy}
+            onClick={() => void startHistory()}
+          >
+            {busy ? "Starting…" : `Start ${historyDays}-day import`}
+          </Button>
+        </DialogActions>
       </Dialog>
       <Dialog open={!!disconnect} onClose={() => setDisconnect(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Disconnect this inbox?</DialogTitle>
