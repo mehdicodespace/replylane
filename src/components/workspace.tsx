@@ -49,6 +49,7 @@ import {
 import { ApplicationDetail } from "./application-detail";
 import { Connections } from "./connections";
 import { Settings } from "./settings";
+import { workspacePath, type WorkspaceRoute } from "@/lib/workspace-navigation";
 
 interface WorkspaceData {
   applications: Application[];
@@ -56,15 +57,29 @@ interface WorkspaceData {
   usage: { requests: number; tokens: number };
   hasMore?: boolean;
 }
-export function Workspace({ demo = false }: { demo?: boolean }) {
+export function Workspace({
+  demo = false,
+  route = "applications",
+}: {
+  demo?: boolean;
+  route?: WorkspaceRoute;
+}) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
   const queryClient = useQueryClient();
   const demoState = useDemo();
   const { view, setView } = useUI();
-  const [section, setSection] = useState("applications");
-  const [tab, setTab] = useState("all");
+  const section =
+    route === "inboxes" ? "connections" : route === "settings" ? "settings" : "applications";
+  const tab =
+    route === "saved"
+      ? "starred"
+      : route === "archive"
+        ? "archive"
+        : route === "attention"
+          ? "attention"
+          : "all";
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [language, setLanguage] = useState("all");
@@ -85,8 +100,6 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
     if (!demo && !authLoading && !user) router.replace("/sign-in");
   }, [demo, authLoading, user, router]);
   useEffect(() => {
-    const s = params.get("section");
-    if (s === "connections" || s === "settings") setSection(s);
     const c = params.get("connection");
     if (c)
       setNotice(
@@ -182,9 +195,11 @@ export function Workspace({ demo = false }: { demo?: boolean }) {
     [applications, search, status, language, sort, tab, dateFrom, dateTo, connectionId],
   );
   function go(s: string, t = "all") {
-    setSection(s);
-    setTab(t);
+    router.push(workspacePath(s, t, demo));
     setMobileNav(false);
+  }
+  function setTab(t: string) {
+    go("applications", t);
   }
   function exportData(all = false) {
     const csv = csvExport(all ? applications : filtered);

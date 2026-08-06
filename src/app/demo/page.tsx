@@ -1,10 +1,4 @@
-import { Suspense } from "react";
-import { Workspace } from "@/components/workspace";
-export const metadata = { title: "Demo workspace" };
+import { redirect } from "next/navigation";
 export default function Page() {
-  return (
-    <Suspense>
-      <Workspace demo />
-    </Suspense>
-  );
+  redirect("/demo/applications");
 }
