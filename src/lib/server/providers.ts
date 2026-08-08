@@ -35,6 +35,7 @@ export interface ConnectionSecret {
   username?: string;
   liveCursor?: string | null;
   lastPhase?: "live" | "import";
+  lastLiveCheckAt?: number;
   until?: string;
   importDays?: number;
   importStartedAt?: string;
@@ -211,7 +212,7 @@ export async function gmailPage(c: ConnectionSecret, token: string): Promise<Mai
   const before = cursor.before || c.until || new Date().toISOString();
   const params = new URLSearchParams({
     q: `after:${Math.floor(new Date(after).getTime() / 1000)} before:${Math.ceil(new Date(before).getTime() / 1000)} -in:sent -in:drafts`,
-    maxResults: "3",
+    maxResults: "6",
   });
   if (cursor.page) params.set("pageToken", cursor.page);
   let list: { messages?: { id: string }[]; nextPageToken?: string };
@@ -304,7 +305,7 @@ export async function microsoftPage(c: ConnectionSecret, token: string): Promise
     $filter: `receivedDateTime ge ${after} and receivedDateTime lt ${before} and isDraft eq false`,
     $select: "id,conversationId,subject,from,receivedDateTime,body,webLink,isDraft",
     $orderby: "receivedDateTime desc",
-    $top: "3",
+    $top: "6",
   });
   const page = await fetchJSON<{ value: GraphMessage[]; "@odata.nextLink"?: string }>(
     cursor.url || `https://graph.microsoft.com/v1.0/me/messages?${params}`,
@@ -446,7 +447,7 @@ export async function imapPage(c: ConnectionSecret, id: string): Promise<MailPag
       const ids = (found || [])
         .filter((uid) => uid > lastUid)
         .sort((a, b) => a - b)
-        .slice(0, 3);
+        .slice(0, 6);
       const messages: MailInput[] = [];
       let checkpoint = lastUid;
       for (const uid of ids) {
@@ -470,7 +471,7 @@ export async function imapPage(c: ConnectionSecret, id: string): Promise<MailPag
       }
       return {
         messages,
-        complete: (found || []).filter((uid) => uid > lastUid).length <= 3,
+        complete: (found || []).filter((uid) => uid > lastUid).length <= 6,
         cursor: JSON.stringify({ uid: checkpoint, validity }),
       };
     } finally {

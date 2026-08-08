@@ -6,6 +6,7 @@ import type { ConnectionSecret } from "@/lib/server/providers";
 const mocks = vi.hoisted(() => ({
   database: null as any,
   classify: vi.fn(),
+  classifyBatch: vi.fn(),
   gmailPage: vi.fn(),
   accessToken: vi.fn(),
 }));
@@ -17,7 +18,11 @@ vi.mock("@/lib/server/core", async (importOriginal) => {
     userRef: (uid: string) => mocks.database.doc(`users/${uid}`),
   };
 });
-vi.mock("@/lib/server/ai", () => ({ classify: mocks.classify, PROMPT_VERSION: "test" }));
+vi.mock("@/lib/server/ai", () => ({
+  classify: mocks.classify,
+  classifyBatch: mocks.classifyBatch,
+  PROMPT_VERSION: "test",
+}));
 vi.mock("@/lib/server/providers", () => ({
   accessToken: mocks.accessToken,
   gmailPage: mocks.gmailPage,
@@ -73,6 +78,7 @@ beforeEach(() => {
   mocks.database.state.set("users/alice", {});
   mocks.database.state.set("connections/c1", structuredClone(connection));
   mocks.classify.mockResolvedValue(result);
+  mocks.classifyBatch.mockImplementation(async (mails: MailInput[]) => mails.map(() => result));
   mocks.accessToken.mockResolvedValue({ access: "access", rotated: null });
 });
 describe("durable mail processing", () => {
@@ -238,7 +244,7 @@ describe("durable mail processing", () => {
   });
   it("keeps the cursor on a partially processed page and skips receipts on retry", async () => {
     mocks.gmailPage.mockResolvedValue({
-      messages: [mail("m1"), mail("m2")],
+      messages: Array.from({ length: 7 }, (_, i) => mail(`m${i + 1}`)),
       cursor: "next-page",
       complete: false,
     });
@@ -246,7 +252,8 @@ describe("durable mail processing", () => {
     expect(mocks.database.state.get("connections/c1").liveCursor).toBeNull();
     Object.assign(mocks.database.state.get("connections/c1"), { nextSyncAt: 0 });
     await syncConnection("c1", "alice");
-    expect(mocks.classify).toHaveBeenCalledTimes(2);
+    expect(mocks.classifyBatch).toHaveBeenCalledTimes(1);
+    expect(mocks.classify).toHaveBeenCalledTimes(1);
     expect(mocks.database.state.get("connections/c1").liveCursor).toBe("next-page");
   });
   it("retains work on an AI rate limit and releases the lease", async () => {

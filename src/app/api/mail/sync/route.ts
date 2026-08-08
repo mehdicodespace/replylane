@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     const uid = await authenticate(request);
     requireProcessing();
-    await rateLimit(uid, "sync", 10);
+    await rateLimit(uid, "sync", 2);
     const { id } = z
       .object({ id: z.string().regex(/^[a-f0-9]{64}$/) })
       .parse(await jsonBody(request));

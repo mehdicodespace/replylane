@@ -10,7 +10,7 @@ vi.mock("@/lib/server/core", async (importOriginal) => {
     env: (name: string) => (name === "GROQ_API_KEY" ? "test-api-key" : process.env[name] || ""),
   };
 });
-import { classify, prepareInput, reserveBudget } from "@/lib/server/ai";
+import { classify, classifyBatch, prepareInput, reserveBudget } from "@/lib/server/ai";
 const mail = {
   id: "m1",
   threadId: "t1",
@@ -46,6 +46,60 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 describe("hosted AI contract and allowance", () => {
+  it("matches batched results by validated index even when returned out of order", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      Response.json(
+        {
+          choices: [
+            {
+              finish_reason: "stop",
+              message: {
+                content: JSON.stringify({
+                  results: [
+                    { index: 1, classification: { ...classification, company: "Second" } },
+                    { index: 0, classification },
+                  ],
+                }),
+              },
+            },
+          ],
+          usage: { total_tokens: 1000 },
+        },
+        { headers: { "x-ratelimit-limit-tokens": "8000" } },
+      ),
+    );
+    vi.stubGlobal("fetch", fetch);
+    const results = await classifyBatch([mail, { ...mail, id: "second" }], "alice");
+    expect(results.map((r) => r.company)).toEqual(["Example", "Second"]);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(mocks.database.state.get("system/aiThrottle").until).toBeGreaterThan(Date.now());
+  });
+  it.each([[0, 0], [0], [0, 2]])(
+    "rejects incomplete or mismatched batch indexes %j",
+    async (...indexes) => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(
+          Response.json({
+            choices: [
+              {
+                finish_reason: "stop",
+                message: {
+                  content: JSON.stringify({
+                    results: indexes.map((index) => ({ index, classification })),
+                  }),
+                },
+              },
+            ],
+            usage: { total_tokens: 500 },
+          }),
+        ),
+      );
+      await expect(classifyBatch([mail, { ...mail, id: "second" }], "alice")).rejects.toThrow(
+        "batch could not be verified",
+      );
+    },
+  );
   it("redacts links and email addresses and bounds multilingual input bytes", () => {
     const input = prepareInput({ ...mail, text: mail.text + "م".repeat(10000) });
     expect(input).not.toContain("jane@example.com");

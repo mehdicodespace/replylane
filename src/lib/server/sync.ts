@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { classify, PROMPT_VERSION } from "./ai";
+import { classify, classifyBatch, PROMPT_VERSION } from "./ai";
 import { AppError, db, hash, userRef } from "./core";
 import {
   accessToken,
@@ -9,6 +9,7 @@ import {
   type ConnectionSecret,
 } from "./providers";
 import type { Classification, MailInput, Application } from "../domain";
+import { knownServiceMail } from "./mail-rules";
 
 export async function recordMail(
   uid: string,
@@ -121,7 +122,10 @@ export async function syncConnection(id: string, expectedUID?: string) {
     // Backfill must never block incoming replies. Alternate the two independent
     // cursors until the bounded import is complete, then spend every turn on live mail.
     const phase =
-      connection.importComplete || connection.lastPhase === "import" ? "live" : "import";
+      connection.importComplete ||
+      (connection.lastPhase === "import" && Date.now() - (connection.lastLiveCheckAt || 0) >= 30000)
+        ? "live"
+        : "import";
     const pageConnection: ConnectionSecret =
       phase === "live"
         ? { ...connection, since: connection.createdAt, cursor: connection.liveCursor || null }
@@ -135,6 +139,7 @@ export async function syncConnection(id: string, expectedUID?: string) {
           ? await gmailPage(pageConnection, token.access)
           : await microsoftPage(pageConnection, token.access);
     } else page = await imapPage(pageConnection, id);
+    const pending: MailInput[] = [];
     for (const mail of page.messages) {
       if (
         mail.receivedAt < pageConnection.since ||
@@ -147,12 +152,23 @@ export async function syncConnection(id: string, expectedUID?: string) {
         .doc(hash(`${id}:${mail.id}`))
         .get();
       if (seen.exists) continue;
-      // One AI call per invocation keeps function duration bounded. A partially
-      // processed page stays put; receipts skip its earlier messages on retry.
-      if (processed >= 1) break;
-      const result = await classify(mail, connection.uid);
-      await recordMail(connection.uid, id, mail, result, phase);
-      processed++;
+      const serviceMail = knownServiceMail(mail);
+      if (serviceMail) {
+        await recordMail(connection.uid, id, mail, serviceMail, phase);
+        processed++;
+        continue;
+      }
+      if (pending.length < 6) pending.push(mail);
+    }
+    if (pending.length) {
+      const results =
+        pending.length === 1
+          ? [await classify(pending[0], connection.uid)]
+          : await classifyBatch(pending, connection.uid);
+      for (const [index, mail] of pending.entries()) {
+        await recordMail(connection.uid, id, mail, results[index], phase);
+        processed++;
+      }
     }
     const receipts = await Promise.all(
       page.messages
@@ -171,7 +187,10 @@ export async function syncConnection(id: string, expectedUID?: string) {
     );
     const pageDone = receipts.every((r) => r.exists);
     await db().runTransaction(async (tx) => {
-      const current = await tx.get(ref);
+      const [current, throttle] = await Promise.all([
+        tx.get(ref),
+        tx.get(db().collection("system").doc("aiThrottle")),
+      ]);
       if (!current.exists || current.data()?.lockId !== lockId) return;
       if (current.data()?.status !== "connected") {
         tx.update(ref, { lockUntil: 0, lockId: "" });
@@ -184,14 +203,17 @@ export async function syncConnection(id: string, expectedUID?: string) {
             : { cursor: page.cursor, importComplete: page.complete }
           : {}),
         lastPhase: phase,
+        ...(phase === "live" ? { lastLiveCheckAt: Date.now() } : {}),
         lastSyncAt: new Date().toISOString(),
         error: null,
         failures: 0,
-        nextSyncAt:
+        nextSyncAt: Math.max(
+          throttle.data()?.until || 0,
           Date.now() +
-          (phase === "live" && connection.importComplete && pageDone && page.complete
-            ? 15 * 60000
-            : 10000),
+            (phase === "live" && connection.importComplete && pageDone && page.complete
+              ? 15 * 60000
+              : 1000),
+        ),
         lockUntil: 0,
         lockId: "",
       });
@@ -203,7 +225,7 @@ export async function syncConnection(id: string, expectedUID?: string) {
     // Unparseable or failed inference is never silently discarded or relabeled.
     const delay =
       known && error.status === 429
-        ? 15 * 60000
+        ? Math.max(1000, (error.retryAt || Date.now() + 60000) - Date.now())
         : Math.min(6 * 3600000, 60000 * 2 ** Math.min(failures, 8));
     await db().runTransaction(async (tx) => {
       const current = await tx.get(ref);

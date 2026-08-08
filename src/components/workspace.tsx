@@ -158,7 +158,7 @@ export function Workspace({
         running = false;
       }
     }
-    const timer = setInterval(() => void tick(), 12000);
+    const timer = setInterval(() => void tick(), 2500);
     return () => {
       stopped = true;
       clearInterval(timer);

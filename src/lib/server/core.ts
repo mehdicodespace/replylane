@@ -10,6 +10,7 @@ export class AppError extends Error {
     message: string,
     public status = 400,
     public code?: string,
+    public retryAt?: number,
   ) {
     super(message);
   }
