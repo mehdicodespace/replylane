@@ -41,8 +41,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
       createTheme({
         palette: {
           mode,
-          primary: { main: mode === "dark" ? "#c8e795" : "#264f43" },
-          background: { paper: mode === "dark" ? "#1e2a26" : "#fffefa" },
+          primary: {
+            main: mode === "dark" ? "#91aeff" : "#3863db",
+            contrastText: mode === "dark" ? "#111c35" : "#fff",
+          },
+          background: {
+            default: mode === "dark" ? "#101218" : "#f7f8fc",
+            paper: mode === "dark" ? "#181c24" : "#fff",
+          },
+          text: {
+            primary: mode === "dark" ? "#eef2fa" : "#202a40",
+            secondary: mode === "dark" ? "#a6b0c3" : "#68748b",
+          },
+          divider: mode === "dark" ? "#30394b" : "#e0e5ef",
         },
         typography: {
           fontFamily: '"DM Sans Variable", sans-serif',

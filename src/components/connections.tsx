@@ -10,8 +10,6 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  Checkbox,
-  FormControlLabel,
   CircularProgress,
   LinearProgress,
 } from "@mui/material";
@@ -55,7 +53,6 @@ export function Connections({
   const [dialog, setDialog] = useState(false);
   const [provider, setProvider] = useState("google");
   const [days, setDays] = useState(0);
-  const [consent, setConsent] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState("");
@@ -63,7 +60,6 @@ export function Connections({
   const [disconnect, setDisconnect] = useState<Connection | null>(null);
   const [history, setHistory] = useState<Connection | null>(null);
   const [historyDays, setHistoryDays] = useState(60);
-  const [historyConsent, setHistoryConsent] = useState(false);
   const [host, setHost] = useState("");
   const [username, setUsername] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
@@ -75,7 +71,7 @@ export function Connections({
     try {
       await api(`/api/mail/${history.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ historyDays, consent: historyConsent }),
+        body: JSON.stringify({ historyDays, consent: true }),
       });
       setHistory(null);
       onRefresh();
@@ -98,7 +94,7 @@ export function Connections({
             email,
             password,
             days,
-            consent,
+            consent: true,
             ...(provider === "custom" ? { host, username } : {}),
           }),
         });
@@ -109,7 +105,7 @@ export function Connections({
       } else {
         const result = await api<{ url: string }>("/api/mail/connect", {
           method: "POST",
-          body: JSON.stringify({ provider, days, consent }),
+          body: JSON.stringify({ provider, days, consent: true }),
         });
         window.location.assign(result.url);
       }
@@ -129,7 +125,7 @@ export function Connections({
     try {
       if (type === "sync") {
         await api("/api/mail/sync", { method: "POST", body: JSON.stringify({ id: c.id }) });
-        onNotice("Sync checked. Queued emails continue within your AI allowance.");
+        onNotice("Inbox checked. Your import continues automatically.");
       } else if (type === "pause")
         await api(`/api/mail/${c.id}`, {
           method: "PATCH",
@@ -196,7 +192,6 @@ export function Connections({
           className="button button-dark"
           onClick={() => {
             setDialog(true);
-            setConsent(false);
             setError("");
           }}
         >
@@ -287,7 +282,7 @@ export function Connections({
                     <p>
                       {c.importComplete
                         ? "History import complete."
-                        : "Replies appear in Applications as they are found. Processing follows your daily AI allowance."}
+                        : "Checking emails in small batches. Application replies appear on your board as they are found."}
                     </p>
                   </>
                 )}
@@ -346,7 +341,6 @@ export function Connections({
                 onClick={() => {
                   setHistory(c);
                   setHistoryDays(60);
-                  setHistoryConsent(false);
                   setError("");
                 }}
               >
@@ -358,7 +352,6 @@ export function Connections({
           className="add-connection"
           onClick={() => {
             setDialog(true);
-            setConsent(false);
           }}
         >
           <span>
@@ -388,7 +381,6 @@ export function Connections({
           startIcon={busy === "import" ? <CircularProgress size={15} /> : <Upload size={16} />}
           onClick={() => {
             setProvider("import");
-            setConsent(false);
             setDialog(true);
           }}
         >
@@ -408,11 +400,9 @@ export function Connections({
       <div className="connection-privacy">
         <ShieldCheck size={20} />
         <p>
-          Replylane never sends, deletes, or marks messages as read. Relevant text is processed by
-          Groq after you give consent. Only application results and short excerpts are saved. IMAP
-          currently checks the Inbox folder; OAuth connections include received mail across folders.{" "}
-          Keep this app open to continue a local import. Once hosted, the scheduled worker can
-          continue while you are away.
+          Your original emails stay untouched. Only application responses and short excerpts are
+          saved. Custom mail connections check the Inbox folder. Keep this preview open while
+          importing.
         </p>
       </div>
       <Dialog open={dialog} onClose={() => !busy && setDialog(false)} maxWidth="sm" fullWidth>
@@ -477,7 +467,7 @@ export function Connections({
                   <p className="muted small">
                     {days === 0
                       ? "Start fresh. Existing emails will not be imported."
-                      : "Recent messages are processed gradually. Import speed depends on the shared AI allowance."}
+                      : "Recent emails will be checked automatically. Watch progress on your inbox card."}
                   </p>
                   {imap && (
                     <>
@@ -530,24 +520,17 @@ export function Connections({
               <div className="consent-box">
                 <ShieldCheck size={21} />
                 <div>
-                  <strong>You decide what happens next.</strong>
+                  <strong>Your inbox stays yours.</strong>
                   <p>
-                    To identify application replies, Replylane reads message text in your chosen
-                    range and sends a shortened, redacted excerpt to Groq. Unrelated emails may be
-                    processed to determine relevance, then their content is discarded. Short
-                    excerpts of application responses are stored in your workspace.
+                    Connecting lets Replylane check emails in your selected date range and organize
+                    application replies. Your original emails stay untouched. You can pause or
+                    disconnect at any time.
                   </p>
                   <Link href="/privacy" target="_blank">
                     Read the privacy details ↗
                   </Link>
                 </div>
               </div>
-              <FormControlLabel
-                control={
-                  <Checkbox checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-                }
-                label="I agree to this email processing and the use of Groq for classification."
-              />
             </div>
           )}
         </DialogContent>
@@ -557,9 +540,7 @@ export function Connections({
             <Button
               variant="contained"
               disabled={
-                !consent ||
-                !!busy ||
-                (imap && (!email || !password || (provider === "custom" && !host)))
+                !!busy || (imap && (!email || !password || (provider === "custom" && !host)))
               }
               onClick={() => {
                 if (provider === "import") {
@@ -600,29 +581,16 @@ export function Connections({
               <MenuItem value={60}>Last 60 days</MenuItem>
             </TextField>
             <p className="muted small">
-              Messages are checked gradually within your AI allowance. Already checked emails are
-              skipped. Only job application responses appear on your board.
+              Already checked emails are skipped. Only job application responses appear on your
+              board.
             </p>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={historyConsent}
-                  onChange={(e) => setHistoryConsent(e.target.checked)}
-                />
-              }
-              label="Process emails in this date range using Groq to identify application responses."
-            />
           </div>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setHistory(null)} disabled={!!busy}>
             Cancel
           </Button>
-          <Button
-            variant="contained"
-            disabled={!historyConsent || !!busy}
-            onClick={() => void startHistory()}
-          >
+          <Button variant="contained" disabled={!!busy} onClick={() => void startHistory()}>
             {busy ? "Starting…" : `Start ${historyDays}-day import`}
           </Button>
         </DialogActions>

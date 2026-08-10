@@ -124,18 +124,16 @@ export function Settings({
           </div>
         </section>
         <section className="settings-card">
-          <h3>A thoughtful AI allowance</h3>
+          <h3>Today's processing</h3>
           <p>
-            {demo
-              ? "Sample mode makes no AI calls."
-              : `${requests} classification requests reserved for your account today.`}
+            {demo ? "Your demo uses sample replies." : `${requests} processing batches used today.`}
           </p>
           <div className="usage-rail">
             <span style={{ width: `${Math.min(100, (requests / 30) * 100)}%` }} />
           </div>
           <p className="small muted">
-            Live accounts share the deployment’s daily provider budget. Each user can process up to
-            30 new emails per UTC day. Imports resume automatically when allowance is available.
+            Up to 30 processing requests per day, with several emails checked in each batch. Larger
+            imports continue automatically when your allowance resets.
           </p>
         </section>
       </div>

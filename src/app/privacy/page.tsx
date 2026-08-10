@@ -25,23 +25,19 @@ export default function Privacy() {
         TLS on port 993 and open the Inbox read-only. The software does not send email, change read
         status, delete mail, or move messages.
       </p>
-      <h2>What the AI sees</h2>
+      <h2>How messages are organized</h2>
       <p>
-        With your consent, the backend sends Groq a shortened message excerpt, subject, sender
-        display name, and received date to decide whether the email is about a job application.
-        Email addresses and links in the submitted text are replaced where recognized. Redaction is
-        limited and does not remove every possible personal detail. Unrelated emails within your
-        selected range may also reach the classifier before being excluded. Attachments are not
-        submitted.
+        When you connect an inbox or start an import, the backend sends our external processing
+        service a shortened message excerpt, subject, sender display name, and received date to
+        decide whether the email is about a job application. Email addresses and links in the
+        submitted text are replaced where recognized. Redaction is limited and does not remove every
+        possible personal detail. Unrelated emails within your selected range may also reach the
+        classifier before being excluded. Attachments are not submitted.
       </p>
       <p>
-        Groq’s{" "}
-        <a href="https://console.groq.com/docs/your-data" target="_blank" rel="noreferrer">
-          data controls documentation
-        </a>{" "}
-        explains retention and exceptions. Deployment owners should enable Zero Data Retention and
-        review their provider agreement before activating real mail processing. This app does not
-        use email to train models or enable model tuning.
+        Processing runs on a hosted service with data-retention controls. Deployment owners should
+        enable Zero Data Retention and review their service agreement before activating real mail
+        processing. This app does not use email to train models or enable model tuning.
       </p>
       <h2>What is saved</h2>
       <p>
