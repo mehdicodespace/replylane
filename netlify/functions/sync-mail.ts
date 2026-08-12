@@ -14,4 +14,4 @@ export default async () => {
     console.error("Scheduled mail sync could not finish; queued work is retained.");
   }
 };
-export const config: Config = { schedule: "*/15 * * * *" };
+export const config: Config = { schedule: "*/1 * * * *" };

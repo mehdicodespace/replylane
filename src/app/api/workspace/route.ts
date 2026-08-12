@@ -50,7 +50,12 @@ export async function GET(request: Request) {
       {
         applications: applications.docs.map((d) => d.data()),
         connections: safeConnections,
-        usage: usage.data() || { requests: 0, tokens: 0 },
+        usage: {
+          requests: 0,
+          tokens: 0,
+          ...usage.data(),
+          requestLimit: Number(process.env.AI_USER_DAILY_REQUEST_BUDGET || 300),
+        },
         hasMore: applications.size === 200,
       },
       { headers: { "Cache-Control": "no-store" } },

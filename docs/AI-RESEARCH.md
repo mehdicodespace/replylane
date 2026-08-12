@@ -22,13 +22,13 @@ Quota is shared by all users. A second API key in the same organization does not
 
 For a rough planning example, if a complete classification uses 1,000 total tokens, a 200,000-token daily allowance permits about 200 classifications before request/minute limits and overhead. At 2,000 tokens, it is about 100. These are estimates, not measured costs or supported-user promises. Persian tokenization, reasoning, long messages, and output length can change the total considerably.
 
-The shipped application cap is 150,000 tokens/day to leave headroom below that published example. A mailbox receiving many unrelated messages can consume the allowance even if only a few are application responses. Starting with **New emails only** is the best default for a low-cost personal test. A 30/60-day import is a queue, not a single giant prompt.
+The shipped deployment cap is 150,000 tokens/day and 500 requests/day across all accounts, with a separate 300-batch per-account cap. Obvious service mail, job digests, and clearly marked bulk mail are screened without a model request; uncertain messages still use the multilingual classifier. Historical imports remain queued and can be slowed by the provider's organization-wide token-per-minute limit.
 
 ## Token controls already implemented
 
 - Persist a receipt after each successful relevance/classification decision.
 - Reuse receipts across overlapping sync windows and retries.
-- Send at most 3,600 UTF-8 bytes of body text, bounded subject/sender details, and no attachments.
+- Send at most 1,500 UTF-8 bytes per message in a batch (3,600 for a single message), bounded subject/sender details, and no attachments.
 - Redact recognizable addresses and URLs before submission; do not claim complete anonymization.
 - Get all fields in one structured response instead of separate relevance, translation, extraction, and status calls.
 - Keep the system instructions stable so provider-side prompt caching can help when available; no caching discount is assumed in the budget.

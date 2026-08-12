@@ -23,6 +23,7 @@ import {
   displayDate,
 } from "@/lib/domain";
 import { api } from "@/lib/firebase-client";
+import { cleanEmailText, emailDirection, emailDocument } from "@/lib/email-content";
 
 export function ApplicationDetail({
   application,
@@ -74,6 +75,17 @@ function Detail({
   const [deadline, setDeadline] = useState(a.deadline || "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [emailView, setEmailView] = useState("formatted");
+  const [showImages, setShowImages] = useState(true);
+  const message = useQuery({
+    queryKey: ["message", a.id, a.receivedAt],
+    queryFn: () => api<{ html: string | null; text: string }>(`/api/applications/${a.id}/message`),
+    enabled: !demo,
+    staleTime: Infinity,
+    retry: false,
+  });
+  const originalText = cleanEmailText(message.data?.text || a.excerpt);
+  const direction = emailDirection(originalText, a.language);
   const events = useQuery({
     queryKey: ["events", a.id],
     queryFn: () => api<{ events: MailEvent[] }>(`/api/applications/${a.id}`),
@@ -118,9 +130,9 @@ function Detail({
         </div>
       </div>
       <div className="detail-company">
-        <span className={`company-avatar ${a.color || "green"}`}>{a.company.slice(0, 1)}</span>
+        <span className={`company-avatar ${a.color || "blue"}`}>{a.company.slice(0, 1)}</span>
         <div>
-          <span>{a.company}</span>
+          <span dir={emailDirection(a.company)}>{a.company}</span>
           <h2 dir="auto">{a.role}</h2>
         </div>
       </div>
@@ -161,8 +173,8 @@ function Detail({
       {a.manualStatus && (
         <p className="manual-note">
           <Check size={14} />
-          You set this status. AI suggested “{statusLabels[a.aiStatus]}”. Your choice is preserved
-          on later replies.
+          You set this status. The original suggestion was “{statusLabels[a.aiStatus]}”. Your choice
+          is preserved on later replies.
         </p>
       )}
       <section className="detail-section">
@@ -233,14 +245,52 @@ function Detail({
           The original reply
         </h3>
         <div className="sender-line">
-          <strong dir="auto">{a.sender}</strong>
+          <strong dir={emailDirection(a.sender)}>{a.sender}</strong>
           <span>{a.senderEmail}</span>
         </div>
-        <h4 dir="auto">{a.subject}</h4>
-        <blockquote dir="auto">{a.excerpt}</blockquote>
-        <p className="muted small">
-          Plain-text excerpt. Attachments and remote images are not loaded.
-        </p>
+        <h4 dir={direction}>{a.subject}</h4>
+        {message.isLoading && (
+          <p className="muted small" role="status">
+            Loading original email…
+          </p>
+        )}
+        {message.data?.html && (
+          <div className="email-view-actions">
+            <button
+              aria-pressed={emailView === "formatted"}
+              onClick={() => setEmailView("formatted")}
+            >
+              Formatted
+            </button>
+            <button aria-pressed={emailView === "text"} onClick={() => setEmailView("text")}>
+              Text
+            </button>
+            {emailView === "formatted" && (
+              <button onClick={() => setShowImages(!showImages)}>
+                {showImages ? "Hide images" : "Show images"}
+              </button>
+            )}
+          </div>
+        )}
+        {message.data?.html && emailView === "formatted" ? (
+          <iframe
+            className="email-frame"
+            title={`Original email: ${a.subject}`}
+            sandbox="allow-popups allow-popups-to-escape-sandbox"
+            referrerPolicy="no-referrer"
+            srcDoc={emailDocument(message.data.html, direction, showImages)}
+          />
+        ) : (
+          <blockquote dir={direction}>{originalText}</blockquote>
+        )}
+        {message.error && (
+          <p className="muted small">
+            Showing the saved text.{" "}
+            <button className="text-link" onClick={() => void message.refetch()}>
+              Retry formatted email
+            </button>
+          </p>
+        )}
         {a.messageUrl ? (
           <a href={a.messageUrl} target="_blank" rel="noopener noreferrer" className="text-link">
             Open original email <ExternalLink size={14} />
@@ -249,7 +299,7 @@ function Detail({
           <span className="muted small">
             {demo
               ? "Sample message — no real inbox link."
-              : "Open your mail app to view the full message."}
+              : "Attachments are available in your mail app."}
           </span>
         )}
       </section>

@@ -42,21 +42,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
         palette: {
           mode,
           primary: {
-            main: mode === "dark" ? "#91aeff" : "#3863db",
+            main: mode === "dark" ? "#aeb8ff" : "#5366d8",
             contrastText: mode === "dark" ? "#111c35" : "#fff",
           },
           background: {
-            default: mode === "dark" ? "#101218" : "#f7f8fc",
-            paper: mode === "dark" ? "#181c24" : "#fff",
+            default: mode === "dark" ? "#13151a" : "#f4f5f7",
+            paper: mode === "dark" ? "#1c1f25" : "#fff",
           },
           text: {
-            primary: mode === "dark" ? "#eef2fa" : "#202a40",
-            secondary: mode === "dark" ? "#a6b0c3" : "#68748b",
+            primary: mode === "dark" ? "#f0f1f4" : "#23262d",
+            secondary: mode === "dark" ? "#a2a7b1" : "#707784",
           },
           divider: mode === "dark" ? "#30394b" : "#e0e5ef",
         },
         typography: {
-          fontFamily: '"DM Sans Variable", sans-serif',
+          fontFamily: '"DM Sans Variable", "Vazirmatn Variable", sans-serif',
           button: { textTransform: "none", fontWeight: 600 },
         },
         shape: { borderRadius: 12 },

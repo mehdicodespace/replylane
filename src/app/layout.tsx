@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@fontsource-variable/dm-sans";
 import "@fontsource/dm-serif-display/400.css";
+import "@fontsource-variable/vazirmatn";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 

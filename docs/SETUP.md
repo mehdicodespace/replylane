@@ -159,7 +159,7 @@ Use Netlify’s current Next.js adapter. Do not configure a static export: this 
 
 Keep live processing disabled in untrusted deploy previews. Do not expose production service-account keys or mailbox secrets to fork builds. Changes to browser variables need a rebuild.
 
-In production, `sync-mail` runs every 15 minutes and invokes the protected `sync-mail-background` function. That worker processes up to twelve new classifications per invocation, with a four-minute work window, pacing, and mailbox leases. The provider allowance may stop it sooner. Confirm background/scheduled function availability and hosting credit costs on your Netlify plan. The worker logs a generic failure if dispatch or processing cannot finish; inspect connection status and deployment logs if it stops progressing.
+In production, `sync-mail` runs every minute and invokes the protected `sync-mail-background` function. That worker processes up to twelve messages per invocation, with a four-minute work window, provider pacing, and mailbox leases. The workspace also advances due work while open. The provider allowance may slow or stop a large historical import. Confirm background/scheduled function availability and hosting credit costs on your Netlify plan. The worker logs a generic failure if dispatch or processing cannot finish; inspect connection status and deployment logs if it stops progressing.
 
 After deployment, test the real callback and verify a scheduled sync while the browser is closed. A successful local build does not verify those external integrations.
 

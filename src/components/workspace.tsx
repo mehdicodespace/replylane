@@ -12,19 +12,14 @@ import {
   Search,
   SlidersHorizontal,
   Star,
-  Mail,
   Link2,
   Settings as SettingsIcon,
-  ArrowRight,
   Archive,
   Menu,
   X,
-  RefreshCw,
   Download,
   ChevronDown,
   Sparkles,
-  Video,
-  Gift,
   Inbox,
   ShieldCheck,
   LogOut,
@@ -54,7 +49,7 @@ import { workspacePath, type WorkspaceRoute } from "@/lib/workspace-navigation";
 interface WorkspaceData {
   applications: Application[];
   connections: Connection[];
-  usage: { requests: number; tokens: number };
+  usage: { requests: number; tokens: number; requestLimit?: number };
   hasMore?: boolean;
 }
 export function Workspace({
@@ -95,7 +90,6 @@ export function Workspace({
   const mobileViewport = useMediaQuery("(max-width:760px)");
   useEffect(() => setClientReady(true), []);
   const [error, setError] = useState("");
-  const [demoSync, setDemoSync] = useState(false);
   useEffect(() => {
     if (!demo && !authLoading && !user) router.replace("/sign-in");
   }, [demo, authLoading, user, router]);
@@ -212,31 +206,6 @@ export function Workspace({
     URL.revokeObjectURL(url);
     setNotice(`${all ? applications.length : filtered.length} applications exported.`);
   }
-  async function sync() {
-    if (demo) {
-      setDemoSync(true);
-      setTimeout(() => {
-        setDemoSync(false);
-        setNotice(
-          "Demo checked. These sample emails are already organized; no AI request was made.",
-        );
-      }, 700);
-      return;
-    }
-    const c = connections.find((c) => c.status === "connected" && c.provider !== "import");
-    if (!c) {
-      go("connections");
-      return;
-    }
-    setError("");
-    try {
-      await api("/api/mail/sync", { method: "POST", body: JSON.stringify({ id: c.id }) });
-      await live.refetch();
-      setNotice("Inbox checked. Queued messages continue as allowance becomes available.");
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
   function resetFilters() {
     setSearch("");
     setStatus("all");
@@ -247,10 +216,12 @@ export function Workspace({
   }
   const heading =
     tab === "starred"
-      ? "A few worth keeping close"
+      ? "Saved applications"
       : tab === "archive"
-        ? "A chapter, neatly closed"
-        : "Your next chapter, in view";
+        ? "Archive"
+        : tab === "attention"
+          ? "Needs attention"
+          : "Applications";
   const nextSteps = active.filter((a) => ["interview", "next_step"].includes(a.status));
   const offers = active.filter((a) => a.status === "offer");
   const review = active.filter((a) => a.status === "review");
@@ -343,11 +314,6 @@ export function Workspace({
           </Link>
         </nav>
         <div className="sidebar-bottom">
-          <div className="sidebar-note">
-            <span>✳</span>
-            <strong>A reply isn’t the whole story.</strong>
-            <p>The right opportunity is still out there. Keep going.</p>
-          </div>
           {demo ? (
             <Link href="/sign-up" className="sidebar-account">
               <span className="workspace-avatar">M</span>
@@ -514,81 +480,25 @@ export function Workspace({
               onExport={() => exportData(true)}
               onNotice={setNotice}
               requests={live.data?.usage.requests || 0}
+              requestLimit={live.data?.usage.requestLimit || 300}
             />
           ) : (
             <>
               <div className="page-title-row">
                 <div>
-                  <span className="eyebrow">A LITTLE CLARITY. A LOT OF POSSIBILITY.</span>
                   <h1>
                     {heading}
                     <span className="heading-dot">.</span>
                   </h1>
-                  <p>
-                    {tab === "starred"
-                      ? "The opportunities you’ve saved for another look."
-                      : tab === "archive"
-                        ? "A little history, for whenever you need it."
-                        : "Every reply has a place. Every next step is a little clearer."}
-                  </p>
+                  <p>{filtered.length} application replies · select a company for details</p>
                 </div>
-                <button className="button button-dark sync-main" onClick={() => void sync()}>
-                  <RefreshCw size={16} className={demoSync ? "spin" : ""} />
-                  {demoSync ? "Checking…" : "Sync inbox"}
+                <button
+                  className="button button-small inbox-shortcut"
+                  onClick={() => go("connections")}
+                >
+                  <Link2 size={16} /> Connected inboxes
                 </button>
               </div>
-              <div className="stats-grid">
-                <Stat
-                  label="APPLICATIONS"
-                  value={active.length}
-                  icon={<Inbox size={19} />}
-                  foot="Your possibilities, organized"
-                />
-                <Stat
-                  label="MOVING FORWARD"
-                  value={nextSteps.length}
-                  icon={<ArrowUpRight size={20} />}
-                  foot="Conversations worth having"
-                  className="stat-progress"
-                />
-                <Stat
-                  label="OFFERS"
-                  value={offers.length}
-                  icon={<Gift size={19} />}
-                  foot={offers.length ? "Something to feel good about" : "Good things take time"}
-                  className="stat-offer"
-                />
-                <Stat
-                  label="NEEDS A LOOK"
-                  value={review.length}
-                  icon={<Sparkles size={18} />}
-                  foot="A little human judgment"
-                  className="stat-review"
-                />
-              </div>
-              {nextSteps.length > 0 && tab !== "archive" && (
-                <div className="attention-strip">
-                  <span className="attention-icon">
-                    <Video size={19} />
-                  </span>
-                  <div>
-                    <strong>Good things are moving forward.</strong>
-                    <span>
-                      {nextSteps.length}{" "}
-                      {nextSteps.length === 1 ? "opportunity has" : "opportunities have"} a next
-                      step waiting for you.
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setTab("attention");
-                      setStatus("all");
-                    }}
-                  >
-                    See next steps <ArrowRight size={15} />
-                  </button>
-                </div>
-              )}
               <section className="applications-section" aria-label="Application board">
                 <div className="applications-heading">
                   <div
@@ -825,7 +735,6 @@ export function Workspace({
                                 {lane.id === "offer" ? "✧" : "···"}
                               </span>
                             </header>
-                            <p className="lane-caption">{lane.caption}</p>
                             <div className="lane-cards">
                               {cards.map((a) => (
                                 <ApplicationCard
@@ -841,9 +750,9 @@ export function Workspace({
                               ))}
                               {cards.length === 0 && (
                                 <div className="empty-lane">
-                                  A little room for
+                                  No replies
                                   <br />
-                                  {lane.id === "offer" ? "good news." : "what’s next."}
+                                  {lane.id === "offer" ? "yet." : "yet."}
                                 </div>
                               )}
                             </div>
@@ -864,7 +773,7 @@ export function Workspace({
                     {filtered.map((a) => (
                       <div key={a.id} className="application-list-row">
                         <button className="list-company" onClick={() => setSelected(a.id)}>
-                          <span className={`company-avatar ${a.color || "green"}`}>
+                          <span className={`company-avatar ${a.color || "blue"}`}>
                             {a.company.slice(0, 1)}
                           </span>
                           <span>
@@ -942,30 +851,6 @@ export function Workspace({
     </div>
   );
 }
-function Stat({
-  label,
-  value,
-  icon,
-  foot,
-  className = "",
-}: {
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-  foot: string;
-  className?: string;
-}) {
-  return (
-    <div className={`stat-card ${className}`}>
-      <div>
-        <span>{label}</span>
-        <span className="stat-icon">{icon}</span>
-      </div>
-      <strong>{value.toString().padStart(2, "0")}</strong>
-      <p>{foot}</p>
-    </div>
-  );
-}
 function ApplicationCard({
   a,
   onOpen,
@@ -976,42 +861,29 @@ function ApplicationCard({
   onStar: () => void;
 }) {
   return (
-    <article className={`application-card card-${a.status}`}>
-      <div className="card-company">
-        <button onClick={onOpen}>
-          <span className={`company-avatar ${a.color || "green"}`}>{a.company.slice(0, 1)}</span>
+    <article className={`application-card compact-card card-${a.status}`}>
+      <button
+        className="compact-card-open"
+        onClick={onOpen}
+        aria-label={`View details for ${a.company}`}
+        title={`${a.company} · ${a.role}`}
+      >
+        <span className="company-avatar blue">{a.company.slice(0, 1)}</span>
+        <span className="compact-card-copy">
           <strong dir="auto">{a.company}</strong>
-        </button>
-        <button
-          className={`icon-button star-button ${a.starred ? "is-starred" : ""}`}
-          aria-label={`${a.starred ? "Unsave" : "Save"} ${a.company}`}
-          onClick={onStar}
-        >
-          <Star size={14} fill={a.starred ? "currentColor" : "none"} />
-        </button>
-      </div>
-      <button className="card-open" onClick={onOpen} aria-label={`View ${a.role} at ${a.company}`}>
-        <h3 dir="auto">{a.role}</h3>
-        <p>{a.summary}</p>
-        <span className={`status-badge ${a.status}`}>
-          <span />
-          {statusLabels[a.status]}
-        </span>
-        <div className="card-sender">
-          <Mail size={12} />
-          <span dir="auto">{a.senderEmail}</span>
-        </div>
-        <div className="card-footer">
-          <span>
+          <time dateTime={a.receivedAt}>
             {new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(
               new Date(a.receivedAt),
             )}
-          </span>
-          <span>
-            <span className="language-tag">{a.language.toUpperCase()}</span>
-            <ArrowUpRight size={14} />
-          </span>
-        </div>
+          </time>
+        </span>
+      </button>
+      <button
+        className={`icon-button star-button ${a.starred ? "is-starred" : ""}`}
+        aria-label={`${a.starred ? "Unsave" : "Save"} ${a.company}`}
+        onClick={onStar}
+      >
+        <Star size={14} fill={a.starred ? "currentColor" : "none"} />
       </button>
     </article>
   );

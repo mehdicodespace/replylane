@@ -57,11 +57,11 @@ Each connection stores its creation time and chosen boundary: now, 30 days earli
 
 Gmail uses paginated, bounded time-window queries. Graph uses paginated received-date windows across the user’s messages, filtering self-sent messages. Both use an overlap of up to two minutes between completed live windows to tolerate small indexing delays. They do not implement Gmail history or Graph delta subscriptions in this version. A message that becomes searchable later than the overlap can be missed; a future reconciliation job or provider-native delta/push integration would improve that edge.
 
-IMAP tracks UIDVALIDITY and the highest checkpointed UID. A UIDVALIDITY change starts a bounded re-scan; delivery receipts use stable Message-ID/content identity to avoid reclassification when server UIDs change. Very large mailbox searches can still be expensive even though only three messages are fetched per pass.
+IMAP tracks UIDVALIDITY and the highest checkpointed UID. A UIDVALIDITY change starts a bounded re-scan; delivery receipts use stable Message-ID/content identity to avoid reclassification when server UIDs change. Each page fetches up to six messages.
 
-Each provider page contains up to three messages. A leased pass classifies at most one unrecorded message. It checkpoints the page only after all in-range messages have receipts. A partial page is fetched again, but processed messages do not call AI again. Provider or model failure leaves the cursor unchanged.
+Each provider page contains up to six messages. A leased pass classifies eligible messages in one batch and checkpoints only after all in-range messages have receipts. A partial page is fetched again, but processed messages do not call the classifier again. Provider or model failure leaves the cursor unchanged. Receipt lookups run together, and obvious service mail and bulk digests are filtered before model use.
 
-The scheduled dispatcher runs every 15 minutes. Its secret-protected background worker runs for a bounded four-minute window, processing up to twelve classifications per invocation. It selects the earliest due active connections. Provider limits, per-user allowance, and retries can stop it earlier.
+The scheduled dispatcher runs every minute. Its secret-protected background worker runs for a bounded four-minute window, processing up to twelve messages per invocation. It selects the earliest due active connections. Provider limits, per-account allowance, and retries can stop it earlier. The open workspace also advances due work while visible.
 
 ## Writes and concurrency
 

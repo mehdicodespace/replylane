@@ -306,9 +306,10 @@ export function Connections({
                   className="text-link"
                   disabled={!!busy || c.status !== "connected"}
                   onClick={() => void action(c, "sync")}
+                  title="Check this inbox now instead of waiting for its next automatic check"
                 >
                   <RefreshCw size={14} className={busy === c.id ? "spin" : ""} />
-                  Sync
+                  Check now
                 </button>
                 <button
                   className="text-link"

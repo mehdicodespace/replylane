@@ -20,7 +20,7 @@ export function prepareInput(mail: MailInput, byteLimit = 3600) {
   const redact = (text: string) =>
     text
       .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")
-      .replace(/https?:\/\/\S+/gi, "[link]");
+      .replace(/https?:\/\/\S+/gi, "");
   const bytes = Buffer.from(redact(mail.text), "utf8");
   // Avoid attachment/HTML bloat. A short excerpt is enough for most hiring responses.
   let text = bytes
@@ -56,14 +56,14 @@ export async function reserveBudget(uid: string, tokens: number) {
       g.tokens + tokens > Number(process.env.AI_DAILY_TOKEN_BUDGET || 150000)
     )
       throw new AppError(
-        "Today's processing allowance is used. Remaining emails resume tomorrow.",
+        "Replylane's shared daily processing budget is used. Queued emails will resume after the reset.",
         429,
         "DAILY_BUDGET",
         Date.parse(day + "T00:00:00Z") + 86400000,
       );
-    if (p.requests >= 30)
+    if (p.requests >= Number(process.env.AI_USER_DAILY_REQUEST_BUDGET || 300))
       throw new AppError(
-        "Your daily import allowance is used. The remaining emails will continue tomorrow.",
+        "Replylane's daily processing limit for this account has been reached. Your remaining emails are queued and will resume after the daily reset.",
         429,
         "PERSONAL_BUDGET",
         Date.parse(day + "T00:00:00Z") + 86400000,
@@ -160,7 +160,7 @@ export function buildBatchClassificationBody(mails: MailInput[]) {
       {
         role: "user",
         content: JSON.stringify(
-          mails.map((m, index) => ({ index, ...JSON.parse(prepareInput(m, 2200)) })),
+          mails.map((m, index) => ({ index, ...JSON.parse(prepareInput(m, 1500)) })),
         ),
       },
     ],

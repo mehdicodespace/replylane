@@ -12,4 +12,4 @@
   external_node_modules = ["firebase-admin", "imapflow", "mailparser"]
 
 [functions."sync-mail"]
-  schedule = "*/15 * * * *"
+  schedule = "*/1 * * * *"

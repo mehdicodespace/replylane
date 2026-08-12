@@ -113,6 +113,7 @@ export const classificationSchema = z
   .strict();
 export type Classification = z.infer<typeof classificationSchema>;
 export interface MailInput {
+  html?: string | null;
   id: string;
   threadId: string;
   subject: string;

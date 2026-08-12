@@ -21,11 +21,13 @@ export function Settings({
   onExport,
   onNotice,
   requests,
+  requestLimit,
 }: {
   demo: boolean;
   onExport: () => void;
   onNotice: (s: string) => void;
   requests: number;
+  requestLimit: number;
 }) {
   const { theme, setTheme } = useUI();
   const { user } = useAuth();
@@ -129,11 +131,11 @@ export function Settings({
             {demo ? "Your demo uses sample replies." : `${requests} processing batches used today.`}
           </p>
           <div className="usage-rail">
-            <span style={{ width: `${Math.min(100, (requests / 30) * 100)}%` }} />
+            <span style={{ width: `${Math.min(100, (requests / requestLimit) * 100)}%` }} />
           </div>
           <p className="small muted">
-            Up to 30 processing requests per day, with several emails checked in each batch. Larger
-            imports continue automatically when your allowance resets.
+            Up to {requestLimit} processing batches are available per account each day. Each batch
+            can cover several emails; queued messages continue after the daily reset.
           </p>
         </section>
       </div>

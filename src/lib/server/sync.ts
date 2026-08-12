@@ -10,6 +10,8 @@ import {
 } from "./providers";
 import type { Classification, MailInput, Application } from "../domain";
 import { knownServiceMail } from "./mail-rules";
+import { sanitizeEmailHTML } from "./email-html";
+import { cleanEmailText } from "../email-content";
 
 export async function recordMail(
   uid: string,
@@ -70,6 +72,11 @@ export async function recordMail(
       excerpt: mail.text.slice(0, 5000),
     });
     if (!latest) return;
+    tx.set(app.collection("messages").doc("latest"), {
+      receivedAt: mail.receivedAt,
+      html: mail.html ? sanitizeEmailHTML(mail.html) : null,
+      text: cleanEmailText(mail.text).slice(0, 30000),
+    });
     const status = existing?.manualStatus ? existing.status : result.status;
     tx.set(app, {
       id: appId,
@@ -139,26 +146,33 @@ export async function syncConnection(id: string, expectedUID?: string) {
           ? await gmailPage(pageConnection, token.access)
           : await microsoftPage(pageConnection, token.access);
     } else page = await imapPage(pageConnection, id);
+    const candidates = page.messages.filter(
+      (mail) =>
+        mail.receivedAt >= pageConnection.since &&
+        (!pageConnection.until || mail.receivedAt < pageConnection.until) &&
+        mail.senderEmail.toLowerCase() !== connection.email.toLowerCase(),
+    );
+    const seen = await Promise.all(
+      candidates.map((mail) =>
+        userRef(connection.uid)
+          .collection("receipts")
+          .doc(hash(`${id}:${mail.id}`))
+          .get(),
+      ),
+    );
     const pending: MailInput[] = [];
-    for (const mail of page.messages) {
-      if (
-        mail.receivedAt < pageConnection.since ||
-        (pageConnection.until && mail.receivedAt >= pageConnection.until) ||
-        mail.senderEmail.toLowerCase() === connection.email.toLowerCase()
-      )
-        continue;
-      const seen = await userRef(connection.uid)
-        .collection("receipts")
-        .doc(hash(`${id}:${mail.id}`))
-        .get();
-      if (seen.exists) continue;
+    const known: Array<{ mail: MailInput; classification: Classification }> = [];
+    for (const [index, mail] of candidates.entries()) {
+      if (seen[index].exists) continue;
       const serviceMail = knownServiceMail(mail);
-      if (serviceMail) {
-        await recordMail(connection.uid, id, mail, serviceMail, phase);
+      if (serviceMail) known.push({ mail, classification: serviceMail });
+      else if (pending.length < 6) pending.push(mail);
+    }
+    if (known.length) {
+      for (const { mail, classification } of known) {
+        await recordMail(connection.uid, id, mail, classification, phase);
         processed++;
-        continue;
       }
-      if (pending.length < 6) pending.push(mail);
     }
     if (pending.length) {
       const results =

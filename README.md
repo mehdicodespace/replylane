@@ -71,9 +71,9 @@ The default model is `openai/gpt-oss-120b` on Groq. A model name can be changed 
 
 Each email is classified once after a successful receipt is recorded. Inputs are shortened, addresses and URLs are redacted where recognized, attachments are omitted, and one request returns relevance, status, entities, summary, and next action. No local model is required.
 
-The deployment reserves tokens before sending a request and reconciles successful responses to reported usage. Failed calls keep a conservative reservation. A shared daily budget, per-account allowance, and provider throttle prevent a large import from consuming the entire allowance in a burst. Exceeding a limit pauses queued work; it does not rotate through keys.
+The deployment reserves tokens before sending a request and reconciles successful responses to reported usage. Failed calls keep a conservative reservation. A shared daily budget, a per-account allowance of up to 300 batches, and provider pacing protect the service from bursts. Obvious one-time service messages and bulk digests are filtered before model use. Exceeding a limit pauses queued work; it does not rotate through keys.
 
-The free allowance belongs to the provider organization, not each app user. This is suitable for a controlled pilot, not a promise of free operation at unlimited scale. All in-range emails may need classification to identify relevant responses, including ordinary inbox traffic.
+The free allowance belongs to the provider organization, not each app user. This is suitable for a controlled pilot, not a promise of free operation at unlimited scale. Uncertain messages still need classification to identify relevant responses, including ordinary inbox traffic.
 
 ## Check the project
 

@@ -6,6 +6,7 @@ import { domainToASCII } from "node:url";
 import ipaddr from "ipaddr.js";
 import { AppError, appURL, decrypted, encrypted, env, hash } from "./core";
 import type { MailInput } from "../domain";
+import { cleanEmailText } from "../email-content";
 
 export const importRange = z.union([z.literal(0), z.literal(30), z.literal(60)]);
 export const imapHosts = {
@@ -262,6 +263,7 @@ export async function gmailPage(c: ConnectionSecret, token: string): Promise<Mai
         gmailText(m.payload, "text/plain") ||
         plainHTML(gmailText(m.payload, "text/html")) ||
         m.snippet,
+      html: gmailText(m.payload, "text/html") || null,
       messageUrl: `https://mail.google.com/mail/u/${encodeURIComponent(c.email)}/#all/${m.threadId}`,
     });
   }
@@ -324,6 +326,7 @@ export async function microsoftPage(c: ConnectionSecret, token: string): Promise
         m.body?.contentType.toLowerCase() === "html"
           ? plainHTML(m.body.content)
           : m.body?.content || m.bodyPreview || "",
+      html: m.body?.contentType.toLowerCase() === "html" ? m.body.content : null,
       messageUrl: m.webLink?.startsWith("https://outlook.") ? m.webLink : null,
     }));
   const complete = !page["@odata.nextLink"];
@@ -495,6 +498,17 @@ export async function parseEML(source: Buffer): Promise<MailInput> {
   });
   const sender = parsed.from?.value[0];
   const messageId = parsed.messageId || hash(source.toString("base64"));
+  let html = typeof parsed.html === "string" ? parsed.html : null;
+  if (html) {
+    for (const attachment of parsed.attachments
+      .filter((a) => a.cid && /^image\/(png|jpeg|gif|webp)$/.test(a.contentType) && a.size <= 40000)
+      .slice(0, 2)) {
+      html = html.replaceAll(
+        `cid:${attachment.cid}`,
+        `data:${attachment.contentType};base64,${attachment.content.toString("base64")}`,
+      );
+    }
+  }
   const references = parsed.references
     ? Array.isArray(parsed.references)
       ? parsed.references
@@ -507,7 +521,65 @@ export async function parseEML(source: Buffer): Promise<MailInput> {
     sender: sender?.name || sender?.address || "Unknown sender",
     senderEmail: sender?.address || "",
     receivedAt: (parsed.date || new Date()).toISOString(),
-    text: parsed.text || (parsed.html ? plainHTML(parsed.html) : ""),
+    text: cleanEmailText(parsed.text || (parsed.html ? plainHTML(parsed.html) : "")),
+    html,
     messageUrl: null,
   };
+}
+
+export async function originalImapMail(
+  c: ConnectionSecret,
+  id: string,
+  expected: { receivedAt: string; subject: string; senderEmail: string },
+): Promise<MailInput | null> {
+  if (c.provider === "google" || c.provider === "microsoft") return null;
+  const client = await imapClient(
+    c.provider,
+    c.username || c.email,
+    decrypted(c.secret, tokenContext(c.uid, id)),
+    c.host,
+  );
+  try {
+    await client.connect();
+    const lock = await client.getMailboxLock("INBOX", { readOnly: true });
+    try {
+      const time = new Date(expected.receivedAt).getTime();
+      const ids = await client.search(
+        { since: new Date(time - 86400000), before: new Date(time + 2 * 86400000) },
+        { uid: true },
+      );
+      if (!ids || !ids.length) return null;
+      const candidates = await client.fetchAll(
+        ids.slice(-200),
+        { envelope: true, internalDate: true },
+        { uid: true },
+      );
+      const matching = candidates.find(
+        (item) =>
+          item.internalDate &&
+          new Date(item.internalDate).getTime() === time &&
+          item.envelope?.subject === expected.subject,
+      );
+      return !matching ? null : await fetchOriginalAfterIterator(client, matching.uid, expected);
+    } finally {
+      lock.release();
+    }
+  } finally {
+    client.close();
+  }
+}
+
+async function fetchOriginalAfterIterator(
+  client: ImapFlow,
+  uid: number,
+  expected: { senderEmail: string },
+): Promise<MailInput | null> {
+  const message = await client.fetchOne(
+    uid,
+    { source: { start: 0, maxLength: 262144 } },
+    { uid: true },
+  );
+  if (!message || !message.source) return null;
+  const parsed = await parseEML(message.source);
+  return parsed.senderEmail.toLowerCase() === expected.senderEmail.toLowerCase() ? parsed : null;
 }

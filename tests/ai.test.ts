@@ -157,7 +157,7 @@ describe("hosted AI contract and allowance", () => {
   });
   it("applies a separate per-account daily import limit", async () => {
     const day = new Date().toISOString().slice(0, 10);
-    mocks.database.state.set(`users/alice/usage/${day}`, { requests: 30, tokens: 1000 });
-    await expect(reserveBudget("alice", 300)).rejects.toThrow("daily import allowance");
+    mocks.database.state.set(`users/alice/usage/${day}`, { requests: 300, tokens: 1000 });
+    await expect(reserveBudget("alice", 300)).rejects.toThrow("daily processing limit");
   });
 });
