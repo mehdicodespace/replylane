@@ -2,8 +2,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  ArrowRight,
   ArrowUpRight,
+  ArrowRight,
   Check,
   ChevronDown,
   Globe2,
@@ -13,7 +13,6 @@ import {
   Inbox,
   Video,
   CircleCheck,
-  MoveUpRight,
   Menu,
   X,
 } from "lucide-react";
@@ -38,7 +37,7 @@ const faqs = [
   ],
   [
     "Is it free to use?",
-    "The interactive demo is free and needs no account. Replylane is an open-source project you can deploy yourself. Live use depends on your email, hosting, database, and AI provider allowances; those services may have limits or costs.",
+    "Create an account to connect your inbox and organize application replies. Replylane is an open-source project you can deploy yourself. Live use depends on your email, hosting, database, and processing provider allowances; those services may have limits or costs.",
   ],
 ];
 
@@ -106,9 +105,6 @@ export default function Landing() {
             <div className="hero-actions">
               <Link href="/sign-up" className="button button-dark">
                 Find your clarity <ArrowUpRight size={19} />
-              </Link>
-              <Link href="/demo" className="text-link">
-                Explore the demo <ArrowRight size={17} />
               </Link>
             </div>
             <div className="hero-footnote">
@@ -471,10 +467,10 @@ export default function Landing() {
             <br />
             Let’s make sense of the replies.
           </h2>
-          <Link href="/demo" className="button button-dark">
-            Take a look around <MoveUpRight size={18} />
+          <Link href="/sign-up" className="button button-dark">
+            Create your account <ArrowUpRight size={18} />
           </Link>
-          <span className="cta-footnote">No account needed to explore the demo.</span>
+          <span className="cta-footnote">Your workspace is private to your account.</span>
         </section>
       </main>
       <footer className="marketing-footer wrap">

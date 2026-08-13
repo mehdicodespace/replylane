@@ -11,7 +11,7 @@ export const firebaseConfigured = Boolean(
 export function clientAuth() {
   if (!firebaseConfigured)
     throw new Error(
-      "Account sign-in isn't configured on this deployment yet. You can explore the demo.",
+      "Account sign-in isn't configured on this deployment yet. Please try again later.",
     );
   const app =
     getApps()[0] ||

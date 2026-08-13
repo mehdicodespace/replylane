@@ -1,6 +1,6 @@
 # Running Replylane with real mail
 
-The public demo works without this setup. Real inbox processing needs Firebase, an AI key, and either OAuth credentials or IMAP access. Configure one provider first, test it end to end, then add the others.
+Account registration and real inbox processing need Firebase, an AI key, and either OAuth credentials or IMAP access. Configure one provider first, test it end to end, then add the others.
 
 ## 1. Local environment
 
@@ -165,4 +165,4 @@ After deployment, test the real callback and verify a scheduled sync while the b
 
 ## Before accepting public registrations
 
-Supply the operator’s identity and privacy contact in `/privacy` and `/terms`, establish retention and account-deletion handling with your infrastructure providers, complete applicable OAuth verification, and review the app with representative real-world fixtures. Keep the public demo available even if live registration is limited during this pilot.
+Supply the operator’s identity and privacy contact in `/privacy` and `/terms`, establish retention and account-deletion handling with your infrastructure providers, complete applicable OAuth verification, and review the app with representative real-world fixtures before opening registration.

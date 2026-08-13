@@ -154,8 +154,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           {!firebaseConfigured && (
             <Alert severity="info" className="auth-alert">
               Live accounts aren’t configured yet.{" "}
-              <Link href="/demo">Explore the working demo</Link> while the deployment owner finishes
-              setup.
+              Account sign-in is unavailable until the deployment owner finishes setup.
             </Alert>
           )}
           {error && (
@@ -309,7 +308,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             </div>
             <ArrowUpRight size={22} />
           </div>
-          <span className="auth-art-caption">An illustrative moment from the demo.</span>
+          <span className="auth-art-caption">A little more clarity for what comes next.</span>
         </div>
         <span className="auth-art-bottom">A LITTLE CLARITY GOES A LONG WAY. ↗</span>
       </aside>

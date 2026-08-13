@@ -19,9 +19,7 @@ npm ci
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000), then choose **Explore the demo**. No API keys, database, account, or mailbox are needed for the demo. Sample edits stay in your browser. Settings has a reset button.
-
-The demo is deliberately separate from real accounts. It makes no AI calls and does not pretend to sync a real inbox.
+Open [localhost:3000](http://localhost:3000), create an account, and verify your email address. Sign in to access your private workspace. Workspace routes require an authenticated account; the public site has no demo workspace.
 
 ## What is here
 
@@ -54,7 +52,7 @@ If you started with new emails only, open **Connected inboxes → Import older e
 | ------------------------------- | ---------------------------------------------------------------------- |
 | Next.js App Router + TypeScript | Pages, layouts, authenticated route handlers, server integrations      |
 | TanStack Query                  | Fetching, caching, refreshing, and updating account data               |
-| Zustand                         | Theme, preferred view, and the isolated demo workspace                 |
+| Zustand                         | Theme and preferred board/list view                                    |
 | MUI + Emotion                   | Accessible dialogs, drawers, form controls, and theme-aware UI         |
 | React Hook Form + Zod           | Account forms and input validation at server boundaries                |
 | Firebase Auth + Firestore       | Accounts, private records, sync leases, and usage reservations         |
@@ -83,7 +81,7 @@ npm test
 npm run build
 ```
 
-`npm run check` runs all three. CI runs them without secrets, so the demo remains deployable independently of live services.
+`npm run check` runs all three. CI runs them without secrets.
 
 To test the actual model, add `GROQ_API_KEY` to `.env.local` and run:
 
@@ -116,4 +114,4 @@ Before a public launch, finish provider verification where applicable, replace p
 
 The most useful next steps are calendar export for interviews, deadline reminders, an optional daily digest, per-folder IMAP selection, and user feedback for false positives. Provider push notifications and a dedicated job queue would be the next infrastructure step when periodic polling no longer fits the user count. These are ideas for the next version, not features represented as already working.
 
-MIT licensed. Company names and messages in the demo are illustrative and do not imply an endorsement.
+MIT licensed. Company names and messages shown in documentation screenshots are illustrative and do not imply an endorsement.

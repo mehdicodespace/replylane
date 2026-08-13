@@ -7,7 +7,6 @@ export default function Privacy() {
         <Link href="/" className="brand">
           ↗ replylane.
         </Link>
-        <Link href="/demo">Explore the demo ↗</Link>
       </header>
       <span className="eyebrow">YOUR INBOX STAYS YOURS</span>
       <h1>Privacy, in plain language.</h1>
@@ -72,9 +71,8 @@ export default function Privacy() {
       </p>
       <h2>Browser storage and logs</h2>
       <p>
-        The demo keeps sample application edits in your browser’s local storage. The theme and
-        board/list preference are also stored locally. Firebase manages authentication storage for
-        signed-in users. There are no advertising or analytics trackers in this project. The app’s
+        The theme and board/list preference are stored locally. Firebase manages authentication storage
+        for signed-in users. There are no advertising or analytics trackers in this project. The app’s
         own error logs omit message content and credentials; hosting services may still retain
         request metadata.
       </p>

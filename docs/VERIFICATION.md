@@ -34,11 +34,11 @@ Observed working interactions:
 - Archive an application, find it in Archive, and restore it.
 - Switch dark/light mode and reload to confirm persistence.
 - Use list and board views.
-- Open the mobile navigation drawer, navigate to Settings, and reset the demo.
+- Open the mobile navigation drawer and navigate to Settings.
 - Confirm closed mobile navigation is excluded from the accessible page and the open menu is a modal dialog.
 - Confirm the phone workspace does not create whole-page horizontal overflow. The board itself scrolls horizontally by design.
 
-Screenshots are in `docs/images/`. Their inboxes, companies, and messages are illustrative demo data.
+Screenshots are in `docs/images/`. Their inboxes, companies, and messages are illustrative sample content for documentation only.
 
 ## Still needs a configured staging deployment
 

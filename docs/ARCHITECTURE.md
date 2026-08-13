@@ -18,7 +18,7 @@ flowchart LR
 
 ## State ownership
 
-TanStack Query holds server data and refreshes the workspace every 30 seconds while open. Patches invalidate that query. Zustand persists only the theme, board/list preference, and demo records. Live email records are not persisted by Zustand. React Hook Form handles account forms; Zod validates server inputs and model output.
+TanStack Query holds server data and refreshes the workspace every 30 seconds while open. Patches invalidate that query. Zustand persists only the theme and board/list preference. Live email records are not persisted by Zustand. React Hook Form handles account forms; Zod validates server inputs and model output.
 
 Live routes use Firebase Admin to verify the ID token, check revocation and verified email, and derive the owner ID. The browser never supplies an authoritative owner ID. Firestore’s direct client rules deny access, including to connection credentials.
 

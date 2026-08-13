@@ -56,7 +56,7 @@ export async function authenticate(request: Request, recent = false) {
 export function requireProcessing() {
   if (process.env.MAIL_PROCESSING_ENABLED !== "true")
     throw new AppError(
-      "Live email processing is not enabled on this deployment. The demo is available while the owner finishes setup.",
+      "Live email processing is not enabled on this deployment yet.",
       503,
     );
   env("GROQ_API_KEY");
