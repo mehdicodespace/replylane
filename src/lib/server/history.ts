@@ -11,6 +11,24 @@ export async function requestHistoryImport(id: string, uid: string, days: 30 | 6
       throw new AppError("Resume or reconnect this inbox before importing older emails.", 409);
     if (c.lockUntil > Date.now()) throw new AppError("A sync is running. Try again shortly.", 409);
     if (!c.importComplete) throw new AppError("An import is already in progress.", 409);
+    const inferredCompleted =
+      c.since && c.createdAt
+        ? Math.max(
+            0,
+            Math.min(
+              60,
+              Math.round(
+                (new Date(c.createdAt).getTime() - new Date(c.since).getTime()) / 86400000,
+              ),
+            ),
+          )
+        : 0;
+    const completed = c.historyDaysCompleted ?? c.importDays ?? inferredCompleted;
+    if (completed >= days)
+      throw new AppError(
+        `The last ${days} days have already been imported for this inbox. Choose a longer range if you want to check older messages.`,
+        409,
+      );
     // Keep the live boundary and its cursor intact. Receipts prevent duplicate cards
     // or AI calls when a later import includes messages already checked.
     const now = new Date().toISOString();
@@ -19,9 +37,8 @@ export async function requestHistoryImport(id: string, uid: string, days: 30 | 6
       cursor: null,
       importComplete: false,
       importDays: days,
+      historyDaysCompleted: completed,
       importStartedAt: now,
-      importChecked: 0,
-      importMatched: 0,
       lastPhase: "live",
       nextSyncAt: Date.now(),
       error: null,

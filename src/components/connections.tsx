@@ -42,11 +42,15 @@ const providerNames: Record<string, string> = {
 export function Connections({
   connections,
   demo,
+  loading = false,
+  loadError = false,
   onRefresh,
   onNotice,
 }: {
   connections: Connection[];
   demo: boolean;
+  loading?: boolean;
+  loadError?: boolean;
   onRefresh: () => void;
   onNotice: (s: string) => void;
 }) {
@@ -203,209 +207,237 @@ export function Connections({
           {error}
         </Alert>
       )}
-      <div className="connection-grid">
-        {connections
-          .filter((c) => c.provider !== "import")
-          .map((c) => (
-            <article className="connection-card" key={c.id}>
-              <div className="connection-card-heading">
-                <span className={`provider-avatar ${c.provider}`}>
-                  {c.provider === "google" ? (
-                    "M"
-                  ) : c.provider === "microsoft" ? (
-                    "▦"
-                  ) : (
-                    <Mail size={22} />
-                  )}
-                </span>
-                <span className={`connection-status ${c.status}`}>
-                  <i />
-                  {demo
-                    ? "Demo connection"
-                    : c.status === "connected"
-                      ? "Connected"
-                      : c.status === "paused"
-                        ? "Paused"
-                        : "Reconnect needed"}
-                </span>
-              </div>
-              <h3>{providerNames[c.provider] || c.provider}</h3>
-              <p className="connection-email">{c.email}</p>
-              <div className="connection-info">
-                <span>
-                  <ShieldCheck size={14} />
-                  Read-only access
-                </span>
-                <span>
-                  <Clock3 size={14} />
-                  {demo
-                    ? "Sample inbox"
-                    : c.lastSyncAt
-                      ? `Checked ${new Date(c.lastSyncAt).toLocaleString()}`
-                      : "First sync queued"}
-                </span>
-                <span>
-                  <Check size={14} />
-                  {c.processed} emails checked
-                </span>
-              </div>
-              <div className="import-progress" aria-live="polite">
-                <strong>
-                  {c.syncing
-                    ? "Checking emails…"
-                    : c.status === "paused"
-                      ? "Sync paused"
-                      : c.error
-                        ? "Waiting to retry"
-                        : !c.importComplete
-                          ? "Import in progress"
-                          : "Watching for new emails"}
-                </strong>
-                {c.since && (
-                  <p>
-                    {c.importStartedAt ||
-                    !c.importComplete ||
-                    (c.createdAt && c.since < c.createdAt)
-                      ? `History from ${displayDate(c.since)} · new emails included`
-                      : "New emails only · earlier messages have not been scanned"}
-                  </p>
-                )}
-                {(c.importStartedAt || !c.importComplete) && (
-                  <>
-                    <p>
-                      {c.importChecked || 0} older emails checked · {c.importMatched || 0}{" "}
-                      application replies found
-                    </p>
-                    {!c.importComplete && c.status === "connected" && !c.error && (
-                      <LinearProgress aria-label="Import in progress" />
-                    )}
-                    <p>
-                      {c.importComplete
-                        ? "History import complete."
-                        : "Checking emails in small batches. Application replies appear on your board as they are found."}
-                    </p>
-                  </>
-                )}
-                {c.status === "connected" && c.nextSyncAt && c.nextSyncAt > Date.now() && (
-                  <p>
-                    Next check:{" "}
-                    {new Date(c.nextSyncAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                )}
-              </div>
-              {c.error && (
-                <Alert severity="warning" className="connection-error">
-                  {c.error}
-                </Alert>
-              )}
-              <div className="connection-card-actions">
-                <button
-                  className="text-link"
-                  disabled={!!busy || c.status !== "connected"}
-                  onClick={() => void action(c, "sync")}
-                  title="Check this inbox now instead of waiting for its next automatic check"
-                >
-                  <RefreshCw size={14} className={busy === c.id ? "spin" : ""} />
-                  Check now
-                </button>
-                <button
-                  className="text-link"
-                  disabled={!!busy}
-                  onClick={() => void action(c, "pause")}
-                >
-                  {c.status === "paused" ? <Play size={14} /> : <Pause size={14} />}{" "}
-                  {c.status === "paused" ? "Resume" : "Pause"}
-                </button>
-                <button
-                  className="icon-button"
-                  aria-label={`Disconnect ${c.email}`}
-                  disabled={!!busy}
-                  onClick={() =>
-                    demo
-                      ? onNotice(
-                          "Demo connections are illustrative. Connect your own inbox after signing up.",
-                        )
-                      : setDisconnect(c)
-                  }
-                >
-                  <Unplug size={16} />
-                </button>
-              </div>
-              <button
-                className="text-link history-import-button"
-                disabled={
-                  demo || !!busy || c.status !== "connected" || !c.importComplete || c.syncing
-                }
-                onClick={() => {
-                  setHistory(c);
-                  setHistoryDays(60);
-                  setError("");
-                }}
-              >
-                <Clock3 size={14} /> Import older emails
-              </button>
-            </article>
+      {loading ? (
+        <div className="connection-grid" aria-label="Loading connected inboxes" aria-busy="true">
+          {[0, 1].map((item) => (
+            <div className="connection-card connection-skeleton" key={item}>
+              <CircularProgress size={20} />
+              <span>Loading your inboxes…</span>
+            </div>
           ))}
-        <button
-          className="add-connection"
-          onClick={() => {
-            setDialog(true);
-          }}
-        >
-          <span>
-            <Plus size={24} />
-          </span>
-          <strong>Room for another inbox</strong>
-          <p>
-            Gmail, Outlook, Yahoo,
-            <br />
-            iCloud, Fastmail, or custom IMAP
-          </p>
-        </button>
-      </div>
-      <section className="import-section">
-        <div>
-          <span className="soft-icon">
-            <Upload size={23} />
-          </span>
-          <div>
-            <h3>A reply from somewhere else?</h3>
-            <p>Import an .eml file from any email provider. One message at a time, up to 1 MB.</p>
-          </div>
         </div>
-        <Button
-          variant="outlined"
-          disabled={!!busy || demo}
-          startIcon={busy === "import" ? <CircularProgress size={15} /> : <Upload size={16} />}
-          onClick={() => {
-            setProvider("import");
-            setDialog(true);
-          }}
-        >
-          Import an email
-        </Button>
-        <input
-          ref={fileInput}
-          type="file"
-          accept=".eml,message/rfc822"
-          hidden
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) void importFile(file);
-          }}
-        />
-      </section>
-      <div className="connection-privacy">
-        <ShieldCheck size={20} />
-        <p>
-          Your original emails stay untouched. Only application responses and short excerpts are
-          saved. Custom mail connections check the Inbox folder. Keep this preview open while
-          importing.
-        </p>
-      </div>
+      ) : loadError ? (
+        <div className="empty-state">
+          <h3>Your inboxes couldn’t load.</h3>
+          <p>Retry the workspace to check your connected accounts again.</p>
+        </div>
+      ) : (
+        <>
+          <div className="connection-grid">
+            {connections
+              .filter((c) => c.provider !== "import")
+              .map((c) => (
+                <article className="connection-card" key={c.id}>
+                  <div className="connection-card-heading">
+                    <span className={`provider-avatar ${c.provider}`}>
+                      {c.provider === "google" ? (
+                        "M"
+                      ) : c.provider === "microsoft" ? (
+                        "▦"
+                      ) : (
+                        <Mail size={22} />
+                      )}
+                    </span>
+                    <span className={`connection-status ${c.status}`}>
+                      <i />
+                      {demo
+                        ? "Demo connection"
+                        : c.status === "connected"
+                          ? "Connected"
+                          : c.status === "paused"
+                            ? "Paused"
+                            : "Reconnect needed"}
+                    </span>
+                  </div>
+                  <h3>{providerNames[c.provider] || c.provider}</h3>
+                  <p className="connection-email">{c.email}</p>
+                  <div className="connection-info">
+                    <span>
+                      <ShieldCheck size={14} />
+                      Read-only access
+                    </span>
+                    <span>
+                      <Clock3 size={14} />
+                      {demo
+                        ? "Sample inbox"
+                        : c.lastSyncAt
+                          ? `Checked ${new Date(c.lastSyncAt).toLocaleString()}`
+                          : "First sync queued"}
+                    </span>
+                    <span>
+                      <Check size={14} />
+                      {c.processed} emails checked
+                    </span>
+                  </div>
+                  <div className="import-progress" aria-live="polite">
+                    <strong>
+                      {c.syncing
+                        ? "Checking emails…"
+                        : c.status === "paused"
+                          ? "Sync paused"
+                          : c.error
+                            ? "Waiting to retry"
+                            : !c.importComplete
+                              ? "Import in progress"
+                              : "Watching for new emails"}
+                    </strong>
+                    {c.since && (
+                      <p>
+                        {c.importStartedAt ||
+                        !c.importComplete ||
+                        (c.createdAt && c.since < c.createdAt)
+                          ? `History from ${displayDate(c.since)} · new emails included`
+                          : "New emails only · earlier messages have not been scanned"}
+                      </p>
+                    )}
+                    {(c.importStartedAt || !c.importComplete) && (
+                      <>
+                        <p>
+                          {c.importChecked || 0} older emails checked · {c.importMatched || 0}{" "}
+                          application replies found
+                        </p>
+                        {!c.importComplete && c.status === "connected" && !c.error && (
+                          <LinearProgress aria-label="Import in progress" />
+                        )}
+                        <p>
+                          {c.importComplete
+                            ? "History import complete."
+                            : "Checking emails in small batches. Application replies appear on your board as they are found."}
+                        </p>
+                      </>
+                    )}
+                    {c.status === "connected" && c.nextSyncAt && c.nextSyncAt > Date.now() && (
+                      <p>
+                        Next check:{" "}
+                        {new Date(c.nextSyncAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    )}
+                  </div>
+                  {c.error && (
+                    <Alert severity="warning" className="connection-error">
+                      {c.error}
+                    </Alert>
+                  )}
+                  <div className="connection-card-actions">
+                    <button
+                      className="text-link"
+                      disabled={!!busy || c.status !== "connected"}
+                      onClick={() => void action(c, "sync")}
+                      title="Check this inbox now instead of waiting for its next automatic check"
+                    >
+                      <RefreshCw size={14} className={busy === c.id ? "spin" : ""} />
+                      Check now
+                    </button>
+                    <button
+                      className="text-link"
+                      disabled={!!busy}
+                      onClick={() => void action(c, "pause")}
+                    >
+                      {c.status === "paused" ? <Play size={14} /> : <Pause size={14} />}{" "}
+                      {c.status === "paused" ? "Resume" : "Pause"}
+                    </button>
+                    <button
+                      className="icon-button"
+                      aria-label={`Disconnect ${c.email}`}
+                      disabled={!!busy}
+                      onClick={() =>
+                        demo
+                          ? onNotice(
+                              "Demo connections are illustrative. Connect your own inbox after signing up.",
+                            )
+                          : setDisconnect(c)
+                      }
+                    >
+                      <Unplug size={16} />
+                    </button>
+                  </div>
+                  <button
+                    className="text-link history-import-button"
+                    disabled={
+                      demo ||
+                      !!busy ||
+                      c.status !== "connected" ||
+                      !c.importComplete ||
+                      c.syncing ||
+                      (c.historyDaysCompleted || 0) >= 60
+                    }
+                    onClick={() => {
+                      setHistory(c);
+                      setHistoryDays(60);
+                      setError("");
+                    }}
+                  >
+                    <Clock3 size={14} />
+                    {(c.historyDaysCompleted || 0) >= 60
+                      ? "60-day history complete"
+                      : "Import older emails"}
+                  </button>
+                </article>
+              ))}
+            <button
+              className="add-connection"
+              onClick={() => {
+                setDialog(true);
+              }}
+            >
+              <span>
+                <Plus size={24} />
+              </span>
+              <strong>Room for another inbox</strong>
+              <p>
+                Gmail, Outlook, Yahoo,
+                <br />
+                iCloud, Fastmail, or custom IMAP
+              </p>
+            </button>
+          </div>
+          <section className="import-section">
+            <div>
+              <span className="soft-icon">
+                <Upload size={23} />
+              </span>
+              <div>
+                <h3>A reply from somewhere else?</h3>
+                <p>
+                  Import an .eml file from any email provider. One message at a time, up to 1 MB.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outlined"
+              disabled={!!busy || demo}
+              startIcon={busy === "import" ? <CircularProgress size={15} /> : <Upload size={16} />}
+              onClick={() => {
+                setProvider("import");
+                setDialog(true);
+              }}
+            >
+              Import an email
+            </Button>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".eml,message/rfc822"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void importFile(file);
+              }}
+            />
+          </section>
+          <div className="connection-privacy">
+            <ShieldCheck size={20} />
+            <p>
+              Your original emails stay untouched. Only application responses and short excerpts are
+              saved. Custom mail connections check the Inbox folder. Keep this preview open while
+              importing.
+            </p>
+          </div>
+        </>
+      )}
       <Dialog open={dialog} onClose={() => !busy && setDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
           <div className="dialog-title">

@@ -1,6 +1,7 @@
 import {
   classificationSchema,
   safeClassification,
+  assessmentStageStatus,
   type Classification,
   type MailInput,
 } from "../domain";
@@ -249,7 +250,7 @@ async function requestClassification(
 export async function classify(mail: MailInput, uid: string): Promise<Classification> {
   const raw = await requestClassification(buildClassificationBody(mail), uid);
   try {
-    return safeClassification(classificationSchema.parse(raw));
+    return normalizeAssessmentOutcome(mail, safeClassification(classificationSchema.parse(raw)));
   } catch {
     throw new AppError("The response could not be verified. Your email remains queued.", 503);
   }
@@ -281,8 +282,18 @@ export async function classifyBatch(mails: MailInput[], uid: string): Promise<Cl
       throw new Error("Duplicate result index");
     return results
       .sort((a, b) => a.index - b.index)
-      .map((r) => safeClassification(r.classification));
+      .map((r) => normalizeAssessmentOutcome(mails[r.index], safeClassification(r.classification)));
   } catch {
     throw new AppError("The batch could not be verified. Your emails remain queued.", 503);
   }
+}
+
+function normalizeAssessmentOutcome(mail: MailInput, result: Classification): Classification {
+  const status = assessmentStageStatus(
+    `${mail.subject}\n${mail.text}\n${result.summary}`,
+    result.status,
+  );
+  return status === result.status
+    ? result
+    : { ...result, status, confidence: Math.max(result.confidence, 0.86) };
 }

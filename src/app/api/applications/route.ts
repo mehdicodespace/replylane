@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticate, userRef, responseError, AppError } from "@/lib/server/core";
+import { assessmentStageStatus } from "@/lib/domain";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
@@ -16,7 +17,17 @@ export async function GET(request: Request) {
     const page = await query.get();
     return NextResponse.json(
       {
-        applications: page.docs.map((d) => d.data()),
+        applications: page.docs.map((d) => {
+          const application = d.data();
+          const status = assessmentStageStatus(
+            `${application.subject || ""}\n${application.excerpt || ""}\n${application.summary || ""}`,
+            application.status,
+            application.manualStatus,
+          );
+          return status === application.status
+            ? application
+            : { ...application, status, aiStatus: status };
+        }),
         cursor: page.size === 200 ? page.docs.at(-1)!.id : null,
       },
       { headers: { "Cache-Control": "no-store" } },

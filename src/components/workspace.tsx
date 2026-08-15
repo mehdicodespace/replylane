@@ -277,7 +277,8 @@ export function Workspace({
             }
           >
             <LayoutGrid size={18} />
-            Applications<span className="nav-count">{active.length}</span>
+            Applications
+            <span className="nav-count">{live.isLoading ? "…" : active.length}</span>
           </button>
           <button
             onClick={() => go("applications", "starred")}
@@ -471,12 +472,16 @@ export function Workspace({
             <Connections
               connections={connections}
               demo={demo}
+              loading={!demo && live.isLoading}
+              loadError={!demo && live.isError && !live.data}
               onRefresh={() => void live.refetch()}
               onNotice={setNotice}
             />
           ) : section === "settings" ? (
             <Settings
               demo={demo}
+              loading={!demo && live.isLoading}
+              loadError={!demo && live.isError && !live.data}
               onExport={() => exportData(true)}
               onNotice={setNotice}
               requests={live.data?.usage.requests || 0}
@@ -490,7 +495,13 @@ export function Workspace({
                     {heading}
                     <span className="heading-dot">.</span>
                   </h1>
-                  <p>{filtered.length} application replies · select a company for details</p>
+                  <p>
+                    {live.isLoading
+                      ? "Loading your applications…"
+                      : live.isError && !live.data
+                        ? "Your applications couldn’t load."
+                        : `${filtered.length} application replies · select a company for details`}
+                  </p>
                 </div>
                 <button
                   className="button button-small inbox-shortcut"
@@ -681,7 +692,7 @@ export function Workspace({
                     </button>
                   </div>
                 )}
-                {!demo && live.isLoading ? (
+                {!demo && (live.isLoading || (live.isError && !live.data)) ? (
                   <div className="board-skeleton">
                     {[0, 1, 2, 3].map((i) => (
                       <Skeleton key={i} variant="rounded" height={260} />

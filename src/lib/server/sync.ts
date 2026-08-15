@@ -216,6 +216,14 @@ export async function syncConnection(id: string, expectedUID?: string) {
             ? { liveCursor: page.cursor }
             : { cursor: page.cursor, importComplete: page.complete }
           : {}),
+        ...(phase === "import" && pageDone && page.complete
+          ? {
+              historyDaysCompleted: Math.max(
+                current.data()?.historyDaysCompleted || 0,
+                current.data()?.importDays || 0,
+              ),
+            }
+          : {}),
         lastPhase: phase,
         ...(phase === "live" ? { lastLiveCheckAt: Date.now() } : {}),
         lastSyncAt: new Date().toISOString(),

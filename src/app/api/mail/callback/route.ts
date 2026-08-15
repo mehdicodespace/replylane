@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
         secret: encrypted(token.refresh_token!, tokenContext(state.uid, id)),
         createdAt: previous?.createdAt || new Date().toISOString(),
         since: previous?.since || since,
+        importDays: previous?.importDays ?? state.days,
         cursor: previous?.cursor || null,
         liveCursor: previous?.liveCursor || null,
         lastPhase: previous?.lastPhase || "import",

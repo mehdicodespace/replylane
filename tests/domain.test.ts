@@ -4,6 +4,7 @@ import {
   filterApplications,
   csvExport,
   applicationPatchSchema,
+  assessmentStageStatus,
 } from "@/lib/domain";
 import { createDemoApplications } from "@/lib/demo";
 const base = {
@@ -28,6 +29,13 @@ const filters = {
   dateTo: "",
 };
 describe("classification boundary", () => {
+  it("treats Persian initial assessment as a next step, while preserving manual and later outcomes", () => {
+    expect(assessmentStageStatus("در لیست ارزیابی اولیه قرار گرفتید", "received")).toBe(
+      "next_step",
+    );
+    expect(assessmentStageStatus("Invitation to interview", "interview")).toBe("interview");
+    expect(assessmentStageStatus("ارزیابی اولیه", "received", true)).toBe("received");
+  });
   it("routes low-confidence outcomes to review", () =>
     expect(safeClassification({ ...base, confidence: 0.5 }).status).toBe("review"));
   it("retains uncertain relevance for human review", () =>

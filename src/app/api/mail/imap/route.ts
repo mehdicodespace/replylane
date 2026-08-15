@@ -55,6 +55,7 @@ export async function POST(request: Request) {
         username: body.username?.trim() || body.email,
         createdAt: prev?.createdAt || new Date().toISOString(),
         since: prev?.since || new Date(Date.now() - body.days * 86400000).toISOString(),
+        importDays: prev?.importDays ?? body.days,
         cursor: prev?.cursor || null,
         liveCursor: prev?.liveCursor || null,
         lastPhase: prev?.lastPhase || "import",

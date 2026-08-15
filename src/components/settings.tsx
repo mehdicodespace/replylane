@@ -22,12 +22,16 @@ export function Settings({
   onNotice,
   requests,
   requestLimit,
+  loading = false,
+  loadError = false,
 }: {
   demo: boolean;
   onExport: () => void;
   onNotice: (s: string) => void;
   requests: number;
   requestLimit: number;
+  loading?: boolean;
+  loadError?: boolean;
 }) {
   const { theme, setTheme } = useUI();
   const { user } = useAuth();
@@ -128,11 +132,23 @@ export function Settings({
         <section className="settings-card">
           <h3>Today's processing</h3>
           <p>
-            {demo ? "Your demo uses sample replies." : `${requests} processing batches used today.`}
+            {loading
+              ? "Loading your usage…"
+              : loadError
+                ? "Your usage couldn’t load. Retry the workspace."
+                : demo
+                  ? "Your demo uses sample replies."
+                  : `${requests} processing batches used today.`}
           </p>
-          <div className="usage-rail">
-            <span style={{ width: `${Math.min(100, (requests / requestLimit) * 100)}%` }} />
-          </div>
+          {!loadError && (
+            <div className="usage-rail">
+              <span
+                style={{
+                  width: `${loading ? 30 : Math.min(100, (requests / requestLimit) * 100)}%`,
+                }}
+              />
+            </div>
+          )}
           <p className="small muted">
             Up to {requestLimit} processing batches are available per account each day. Each batch
             can cover several emails; queued messages continue after the daily reset.

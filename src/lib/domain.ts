@@ -17,6 +17,20 @@ export const statusLabels: Record<Status, string> = {
   rejected: "Not this time",
   review: "Needs review",
 };
+
+const assessmentStagePattern =
+  /(?:initial\s+(?:assessment|evaluation|screening)|preliminary\s+(?:assessment|evaluation)|(?:online|technical|skills?)\s+(?:assessment|test)|(?:invited|selected|shortlisted|moved)\s+(?:to|for)\s+(?:the\s+)?(?:next\s+)?(?:assessment|evaluation|stage)|ارزیابی\s+(?:اولیه|تخصصی|فنی)|بررسی\s+اولیه|(?:به|برای)\s+مرحله\s+(?:ارزیابی|بررسی)|آزمون\s+(?:آنلاین|فنی|تخصصی)|تست\s+(?:آنلاین|فنی|تخصصی)|erste\s+(?:bewertung|auswahl)|eignungstest|testaufgabe|évaluation\s+(?:initiale|technique)|prueba\s+(?:técnica|de\s+selección))/i;
+
+export function assessmentStageStatus(text: string, status: Status, manualStatus = false): Status {
+  if (manualStatus || !["received", "review"].includes(status)) return status;
+  const normalized = text
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[ي]/g, "ی")
+    .replace(/[ك]/g, "ک")
+    .replace(/\s+/g, " ");
+  return assessmentStagePattern.test(normalized) ? "next_step" : status;
+}
 export const lanes: { id: string; label: string; statuses: Status[]; caption: string }[] = [
   { id: "received", label: "Received", statuses: ["received"], caption: "You're on their radar" },
   {
@@ -80,6 +94,7 @@ export interface Connection {
   since?: string;
   createdAt?: string;
   importDays?: number;
+  historyDaysCompleted?: number;
   importStartedAt?: string;
   importChecked?: number;
   importMatched?: number;

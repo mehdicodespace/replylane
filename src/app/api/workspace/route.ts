@@ -8,6 +8,7 @@ import {
   adminAuth,
   hash,
 } from "@/lib/server/core";
+import { assessmentStageStatus } from "@/lib/domain";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
@@ -39,6 +40,22 @@ export async function GET(request: Request) {
         since: c.since,
         createdAt: c.createdAt,
         importDays: c.importDays || 0,
+        historyDaysCompleted:
+          c.historyDaysCompleted ??
+          (c.importComplete
+            ? c.importDays ||
+              (c.since && c.createdAt
+                ? Math.max(
+                    0,
+                    Math.min(
+                      60,
+                      Math.round(
+                        (new Date(c.createdAt).getTime() - new Date(c.since).getTime()) / 86400000,
+                      ),
+                    ),
+                  )
+                : 0)
+            : 0),
         importStartedAt: c.importStartedAt || null,
         importChecked: c.importChecked || 0,
         importMatched: c.importMatched || 0,
@@ -48,7 +65,17 @@ export async function GET(request: Request) {
     });
     return NextResponse.json(
       {
-        applications: applications.docs.map((d) => d.data()),
+        applications: applications.docs.map((d) => {
+          const application = d.data();
+          const status = assessmentStageStatus(
+            `${application.subject || ""}\n${application.excerpt || ""}\n${application.summary || ""}`,
+            application.status,
+            application.manualStatus,
+          );
+          return status === application.status
+            ? application
+            : { ...application, status, aiStatus: status };
+        }),
         connections: safeConnections,
         usage: {
           requests: 0,
