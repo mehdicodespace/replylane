@@ -208,13 +208,9 @@ export function Connections({
         </Alert>
       )}
       {loading ? (
-        <div className="connection-grid" aria-label="Loading connected inboxes" aria-busy="true">
-          {[0, 1].map((item) => (
-            <div className="connection-card connection-skeleton" key={item}>
-              <CircularProgress size={20} />
-              <span>Loading your inboxes…</span>
-            </div>
-          ))}
+        <div className="inboxes-loading" aria-label="Loading connected inboxes" aria-busy="true">
+          <CircularProgress size={20} />
+          <span>Loading your inboxes…</span>
         </div>
       ) : loadError ? (
         <div className="empty-state">

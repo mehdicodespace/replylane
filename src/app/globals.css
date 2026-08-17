@@ -2379,13 +2379,16 @@ html[data-theme="dark"] .attention-icon {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
-.connection-skeleton {
-  min-height: 300px;
+.inboxes-loading {
+  min-height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
 }
 .workspace-loading {
   min-height: 100vh;
