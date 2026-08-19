@@ -84,7 +84,11 @@ beforeEach(() => {
 describe("durable mail processing", () => {
   afterEach(() => vi.unstubAllEnvs());
   it("starts a bounded import without resetting the new-mail cursor or existing results", async () => {
-    Object.assign(mocks.database.state.get("connections/c1"), { liveCursor: "live-position" });
+    Object.assign(mocks.database.state.get("connections/c1"), {
+      liveCursor: "live-position",
+      importChecked: 8,
+      importMatched: 5,
+    });
     mocks.database.state.set("users/alice/applications/kept", { notes: "Keep this" });
     const before = Date.now();
     await requestHistoryImport("c1", "alice", 60);
@@ -95,8 +99,8 @@ describe("durable mail processing", () => {
       cursor: null,
       importComplete: false,
       importDays: 60,
-      importChecked: 0,
-      importMatched: 0,
+      importChecked: 8,
+      importMatched: 5,
       lastPhase: "live",
     });
     expect(new Date(c.since).getTime()).toBeGreaterThanOrEqual(before - 60 * 86400000);
@@ -303,5 +307,15 @@ describe("durable mail processing", () => {
     Object.assign(mocks.database.state.get("connections/c1"), { lockUntil: Date.now() + 100000 });
     await expect(syncConnection("c1", "alice")).rejects.toThrow("already syncing");
     expect(mocks.gmailPage).not.toHaveBeenCalled();
+  });
+  it("lets an explicit manual check run before the next scheduled time", async () => {
+    Object.assign(mocks.database.state.get("connections/c1"), {
+      lastSyncAt: new Date().toISOString(),
+      nextSyncAt: Date.now() + 10 * 60000,
+    });
+    mocks.gmailPage.mockResolvedValue({ messages: [], cursor: null, complete: true });
+    await expect(syncConnection("c1", "alice")).rejects.toThrow("next sync is queued");
+    await expect(syncConnection("c1", "alice", true)).resolves.toMatchObject({ processed: 0 });
+    expect(mocks.gmailPage).toHaveBeenCalledTimes(1);
   });
 });

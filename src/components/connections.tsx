@@ -128,7 +128,10 @@ export function Connections({
     setError("");
     try {
       if (type === "sync") {
-        await api("/api/mail/sync", { method: "POST", body: JSON.stringify({ id: c.id }) });
+        await api("/api/mail/sync", {
+          method: "POST",
+          body: JSON.stringify({ id: c.id, force: true }),
+        });
         onNotice("Inbox checked. Your import continues automatically.");
       } else if (type === "pause")
         await api(`/api/mail/${c.id}`, {

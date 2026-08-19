@@ -15,10 +15,10 @@ export async function POST(request: Request) {
     const uid = await authenticate(request);
     requireProcessing();
     await rateLimit(uid, "sync", 2);
-    const { id } = z
-      .object({ id: z.string().regex(/^[a-f0-9]{64}$/) })
+    const { id, force } = z
+      .object({ id: z.string().regex(/^[a-f0-9]{64}$/), force: z.boolean().optional() })
       .parse(await jsonBody(request));
-    return NextResponse.json(await syncConnection(id, uid));
+    return NextResponse.json(await syncConnection(id, uid, force === true));
   } catch (error) {
     return responseError(error);
   }

@@ -105,7 +105,7 @@ export async function recordMail(
   });
 }
 
-export async function syncConnection(id: string, expectedUID?: string) {
+export async function syncConnection(id: string, expectedUID?: string, force = false) {
   const ref = db().collection("connections").doc(id);
   const lockId = randomUUID();
   const connection = await db().runTransaction(async (tx) => {
@@ -118,7 +118,7 @@ export async function syncConnection(id: string, expectedUID?: string) {
     if (!owner.exists || owner.data()?.deleting)
       throw new AppError("This account is unavailable.", 409);
     if (c.lockUntil > Date.now()) throw new AppError("This mailbox is already syncing.", 409);
-    if (c.nextSyncAt > Date.now() && c.lastSyncAt)
+    if (!force && c.nextSyncAt > Date.now() && c.lastSyncAt)
       throw new AppError("Your next sync is queued. Please wait a moment.", 429);
     // Longer than the maximum provider/AI work in a single invocation.
     tx.update(ref, { lockUntil: Date.now() + 240000, lockId });
