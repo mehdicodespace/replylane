@@ -227,46 +227,48 @@ export async function gmailPage(c: ConnectionSecret, token: string): Promise<Mai
       return { messages: [], cursor: JSON.stringify({ after, before }), complete: false };
     throw error;
   }
-  const messages: MailInput[] = [];
-  for (const entry of list.messages || []) {
-    let m: {
-      id: string;
-      threadId: string;
-      internalDate: string;
-      payload: GmailPart;
-      snippet: string;
-    };
-    try {
-      m = await fetchJSON(
-        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${entry.id}?format=full`,
-        token,
-      );
-    } catch (error) {
-      if (error instanceof AppError && error.status === 410) continue;
-      throw error;
-    }
-    const header = (name: string) =>
-      m.payload.headers?.find((h) => h.name.toLowerCase() === name)?.value || "";
-    const from = header("from");
-    const senderEmail = from.match(/<([^>]+)>/)?.[1] || from;
-    messages.push({
-      id: m.id,
-      threadId: m.threadId,
-      subject: header("subject"),
-      sender: from
-        .replace(/<[^>]+>/g, "")
-        .replaceAll('"', "")
-        .trim(),
-      senderEmail,
-      receivedAt: new Date(Number(m.internalDate)).toISOString(),
-      text:
-        gmailText(m.payload, "text/plain") ||
-        plainHTML(gmailText(m.payload, "text/html")) ||
-        m.snippet,
-      html: gmailText(m.payload, "text/html") || null,
-      messageUrl: `https://mail.google.com/mail/u/${encodeURIComponent(c.email)}/#all/${m.threadId}`,
-    });
-  }
+  const loaded = await Promise.all(
+    (list.messages || []).map(async (entry): Promise<MailInput | null> => {
+      let m: {
+        id: string;
+        threadId: string;
+        internalDate: string;
+        payload: GmailPart;
+        snippet: string;
+      };
+      try {
+        m = await fetchJSON(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${entry.id}?format=full`,
+          token,
+        );
+      } catch (error) {
+        if (error instanceof AppError && error.status === 410) return null;
+        throw error;
+      }
+      const header = (name: string) =>
+        m.payload.headers?.find((h) => h.name.toLowerCase() === name)?.value || "";
+      const from = header("from");
+      const senderEmail = from.match(/<([^>]+)>/)?.[1] || from;
+      return {
+        id: m.id,
+        threadId: m.threadId,
+        subject: header("subject"),
+        sender: from
+          .replace(/<[^>]+>/g, "")
+          .replaceAll('"', "")
+          .trim(),
+        senderEmail,
+        receivedAt: new Date(Number(m.internalDate)).toISOString(),
+        text:
+          gmailText(m.payload, "text/plain") ||
+          plainHTML(gmailText(m.payload, "text/html")) ||
+          m.snippet,
+        html: gmailText(m.payload, "text/html") || null,
+        messageUrl: `https://mail.google.com/mail/u/${encodeURIComponent(c.email)}/#all/${m.threadId}`,
+      };
+    }),
+  );
+  const messages = loaded.filter((message): message is MailInput => message !== null);
   const complete = !list.nextPageToken;
   // One-second overlap prevents boundary rounding gaps. Receipts eliminate duplicates.
   return {
@@ -451,27 +453,31 @@ export async function imapPage(c: ConnectionSecret, id: string): Promise<MailPag
         .filter((uid) => uid > lastUid)
         .sort((a, b) => a - b)
         .slice(0, 6);
-      const messages: MailInput[] = [];
-      let checkpoint = lastUid;
-      for (const uid of ids) {
-        const msg = await client.fetchOne(
-          uid,
-          { source: { start: 0, maxLength: 131072 }, internalDate: true },
-          { uid: true },
-        );
-        if (!msg) {
-          checkpoint = uid;
-          continue;
-        }
-        const parsed = await parseEML(msg.source || Buffer.alloc(0));
-        checkpoint = uid;
-        const date = msg.internalDate
-          ? new Date(msg.internalDate).toISOString()
-          : parsed.receivedAt;
-        if (date < c.since || (c.until && date >= c.until)) continue;
-        // Message-ID/content identity survives a server UIDVALIDITY reset.
-        messages.push({ ...parsed, receivedAt: date });
-      }
+      // Fetch the bounded UID set in one IMAP command instead of issuing a
+      // round trip for every message. Parsing then happens concurrently below.
+      const fetched = ids.length
+        ? await client.fetchAll(
+            ids,
+            { source: { start: 0, maxLength: 131072 }, internalDate: true },
+            { uid: true },
+          )
+        : [];
+      const byUid = new Map(fetched.map((message) => [message.uid, message]));
+      const loaded = await Promise.all(
+        ids.map(async (uid): Promise<MailInput | null> => {
+          const msg = byUid.get(uid);
+          if (!msg) return null;
+          const parsed = await parseEML(msg.source || Buffer.alloc(0));
+          const date = msg.internalDate
+            ? new Date(msg.internalDate).toISOString()
+            : parsed.receivedAt;
+          if (date < c.since || (c.until && date >= c.until)) return null;
+          // Message-ID/content identity survives a server UIDVALIDITY reset.
+          return { ...parsed, receivedAt: date };
+        }),
+      );
+      const messages = loaded.filter((message): message is MailInput => message !== null);
+      const checkpoint = ids.at(-1) || lastUid;
       return {
         messages,
         complete: (found || []).filter((uid) => uid > lastUid).length <= 6,

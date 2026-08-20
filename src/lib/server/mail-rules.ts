@@ -35,11 +35,11 @@ export function knownServiceMail(mail: MailInput): Classification | null {
 
   const hiringContext =
     /application|applied|resume|curriculum vitae|candidate|interview|assessment|offer|recruit(?:er|ing|ment)|hiring|position|job title|bewerbung|lebenslauf|vorstellungsgespräch|bewerber|einladung|absage|zusage|مصاحبه|رزومه|درخواست|موقعیت شغلی|استخدام|همکاری|پذیرش|ارزیابی|وظیفه|entrevista|candidatura|postulación|recrutement|entretien|応募|面接|职位|面试|السيرة الذاتية|مقابلة|توظيف/i.test(
-      `${mail.subject}\n${mail.text.slice(0, 1200)}`,
+      `${mail.subject}\n${(mail.text || "").slice(0, 1200)}`,
     );
   const bulkSignals =
     /unsubscribe|email preferences|view in browser|weekly digest|marketing email|special offer|top stories|trending now|recommended for you|nieuwsbrief|abmelden|abonnement|خبرنامه|لغو اشتراک|إلغاء الاشتراك/i.test(
-      mail.text.slice(-1800),
+      (mail.text || "").slice(-1800),
     );
   if (!hiringContext && bulkSignals) return irrelevant();
 

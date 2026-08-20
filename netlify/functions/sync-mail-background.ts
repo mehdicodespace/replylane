@@ -13,7 +13,7 @@ export default async (request: Request) => {
   )
     return;
   try {
-    await scheduledSync(12);
+    await scheduledSync(36);
   } catch {
     console.error("Background mail sync paused; queued work is retained.");
   }

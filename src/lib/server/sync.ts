@@ -47,19 +47,8 @@ export async function recordMail(
       processedAt: new Date().toISOString(),
       relevant: result.relevant,
       promptVersion: PROMPT_VERSION,
+      ...(phase ? { phase, counted: false } : { counted: true }),
     });
-    if (phase) {
-      const c = connection.data()!;
-      tx.update(connection.ref, {
-        processed: (c.processed || 0) + 1,
-        ...(phase === "import"
-          ? {
-              importChecked: (c.importChecked || 0) + 1,
-              importMatched: (c.importMatched || 0) + Number(result.relevant),
-            }
-          : {}),
-      });
-    }
     if (!result.relevant) return;
     const existing = current.data() as Application | undefined;
     const latest = !existing || mail.receivedAt >= existing.receivedAt;
@@ -168,49 +157,58 @@ export async function syncConnection(id: string, expectedUID?: string, force = f
       if (serviceMail) known.push({ mail, classification: serviceMail });
       else if (pending.length < 6) pending.push(mail);
     }
-    if (known.length) {
-      for (const { mail, classification } of known) {
-        await recordMail(connection.uid, id, mail, classification, phase);
-        processed++;
-      }
-    }
+    const recorded: Array<{ mail: MailInput; classification: Classification }> = [...known];
     if (pending.length) {
       const results =
         pending.length === 1
           ? [await classify(pending[0], connection.uid)]
           : await classifyBatch(pending, connection.uid);
       for (const [index, mail] of pending.entries()) {
-        await recordMail(connection.uid, id, mail, results[index], phase);
-        processed++;
+        recorded.push({ mail, classification: results[index] });
       }
     }
-    const receipts = await Promise.all(
-      page.messages
-        .filter(
-          (m) =>
-            m.receivedAt >= pageConnection.since &&
-            (!pageConnection.until || m.receivedAt < pageConnection.until) &&
-            m.senderEmail.toLowerCase() !== connection.email.toLowerCase(),
-        )
-        .map((m) =>
-          userRef(connection.uid)
-            .collection("receipts")
-            .doc(hash(`${id}:${m.id}`))
-            .get(),
-        ),
+    // Message transactions touch independent receipts and application threads. Run them
+    // together so a six-message page does not pay six sequential database round trips.
+    await Promise.all(
+      recorded.map(({ mail, classification }) =>
+        recordMail(connection.uid, id, mail, classification, phase),
+      ),
     );
-    const pageDone = receipts.every((r) => r.exists);
+    processed = recorded.length;
+    const receiptRefs = candidates.map((mail) =>
+      userRef(connection.uid)
+        .collection("receipts")
+        .doc(hash(`${id}:${mail.id}`)),
+    );
+    let pageDone = false;
     await db().runTransaction(async (tx) => {
-      const [current, throttle] = await Promise.all([
+      const [current, throttle, ...receipts] = await Promise.all([
         tx.get(ref),
         tx.get(db().collection("system").doc("aiThrottle")),
+        ...receiptRefs.map((receiptRef) => tx.get(receiptRef)),
       ]);
       if (!current.exists || current.data()?.lockId !== lockId) return;
       if (current.data()?.status !== "connected") {
         tx.update(ref, { lockUntil: 0, lockId: "" });
         return;
       }
+      const newlyCounted = receipts.flatMap((receipt, index) => {
+        if (!receipt.exists || receipt.data()?.counted !== false) return [];
+        tx.update(receiptRefs[index], { counted: true });
+        return [receipt.data()!];
+      });
+      const newlyImported = newlyCounted.filter((receipt) => receipt.phase === "import");
+      pageDone = receipts.every((receipt) => receipt.exists);
       tx.update(ref, {
+        processed: (current.data()?.processed || 0) + newlyCounted.length,
+        ...(newlyImported.length
+          ? {
+              importChecked: (current.data()?.importChecked || 0) + newlyImported.length,
+              importMatched:
+                (current.data()?.importMatched || 0) +
+                newlyImported.filter((receipt) => receipt.relevant).length,
+            }
+          : {}),
         ...(pageDone
           ? phase === "live"
             ? { liveCursor: page.cursor }
@@ -304,10 +302,11 @@ export async function scheduledSync(maxMessages = 1) {
       if (processed >= maxMessages || Date.now() >= deadline) break;
     }
     if (!progress) break;
-    if (processed < maxMessages)
-      await new Promise((resolve) =>
-        setTimeout(resolve, Number(process.env.AI_MIN_INTERVAL_MS || 8000)),
-      );
+    if (processed < maxMessages) {
+      const throttle = await db().collection("system").doc("aiThrottle").get();
+      const remaining = Math.min(deadline - Date.now(), (throttle.data()?.until || 0) - Date.now());
+      if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
+    }
   }
   return { processed };
 }

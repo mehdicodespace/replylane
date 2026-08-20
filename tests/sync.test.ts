@@ -182,11 +182,10 @@ describe("durable mail processing", () => {
   it("records a result and history exactly once for a repeated delivery", async () => {
     await recordMail("alice", "c1", mail("m1"), result, "import");
     await recordMail("alice", "c1", mail("m1"), result, "import");
-    expect(mocks.database.state.get("connections/c1")).toMatchObject({
-      processed: 1,
-      importChecked: 1,
-      importMatched: 1,
-    });
+    expect(mocks.database.state.get("connections/c1").processed).toBe(0);
+    expect(
+      [...mocks.database.state.entries()].find(([key]) => key.includes("/receipts/"))?.[1],
+    ).toMatchObject({ counted: false, phase: "import" });
     expect(
       [...mocks.database.state.keys()].filter((k: string) => k.includes("/receipts/")),
     ).toHaveLength(1);
