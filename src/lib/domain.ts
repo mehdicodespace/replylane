@@ -14,7 +14,7 @@ export const statusLabels: Record<Status, string> = {
   interview: "Interview",
   next_step: "Next step",
   offer: "Offer",
-  rejected: "Not this time",
+  rejected: "Rejected",
   review: "Needs review",
 };
 
@@ -32,7 +32,6 @@ export function assessmentStageStatus(text: string, status: Status, manualStatus
   return assessmentStagePattern.test(normalized) ? "next_step" : status;
 }
 export const lanes: { id: string; label: string; statuses: Status[]; caption: string }[] = [
-  { id: "received", label: "Received", statuses: ["received"], caption: "You're on their radar" },
   {
     id: "progress",
     label: "Moving forward",
@@ -42,7 +41,7 @@ export const lanes: { id: string; label: string; statuses: Status[]; caption: st
   { id: "offer", label: "Offers", statuses: ["offer"], caption: "Something to celebrate" },
   {
     id: "rejected",
-    label: "Not this time",
+    label: "Rejected",
     statuses: ["rejected"],
     caption: "On to the right fit",
   },
@@ -163,6 +162,7 @@ export function filterApplications(items: Application[], f: Filters) {
     .filter((a) => {
       if (f.tab === "archive" ? !a.archived : a.archived) return false;
       if (f.tab === "starred" && !a.starred) return false;
+      if (f.tab === "rejected" && a.status !== "rejected") return false;
       if (
         f.tab === "attention" &&
         !["interview", "next_step", "offer", "review"].includes(a.status)

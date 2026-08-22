@@ -4,6 +4,7 @@ export const workspaceRoutes = [
   "inboxes",
   "archive",
   "attention",
+  "rejected",
   "settings",
 ] as const;
 export type WorkspaceRoute = (typeof workspaceRoutes)[number];
@@ -19,6 +20,8 @@ export function workspacePath(section: string, tab = "all", demo = false) {
             ? "archive"
             : tab === "attention"
               ? "attention"
-              : "applications";
+              : tab === "rejected"
+                ? "rejected"
+                : "applications";
   return `/${demo ? "demo" : "app"}/${route}`;
 }

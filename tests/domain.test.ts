@@ -5,8 +5,11 @@ import {
   csvExport,
   applicationPatchSchema,
   assessmentStageStatus,
+  lanes,
+  statusLabels,
 } from "@/lib/domain";
 import { createDemoApplications } from "@/lib/demo";
+import { workspacePath } from "@/lib/workspace-navigation";
 const base = {
   relevant: true,
   relevanceConfidence: 0.99,
@@ -87,6 +90,21 @@ describe("search and export", () => {
     expect(
       filterApplications(changed, { ...filters, tab: "starred" }).every(
         (a) => a.starred && !a.archived,
+      ),
+    ).toBe(true);
+  });
+  it("keeps acknowledgments off the board and gives rejected replies their own tab", () => {
+    expect(lanes.some((lane) => lane.id === "received")).toBe(false);
+    expect(lanes.find((lane) => lane.id === "rejected")?.label).toBe("Rejected");
+    expect(statusLabels.rejected).toBe("Rejected");
+    expect(workspacePath("applications", "rejected")).toBe("/app/rejected");
+    const rejected = filterApplications(items, { ...filters, tab: "rejected" });
+    expect(rejected.length).toBeGreaterThan(0);
+    expect(rejected.every((application) => application.status === "rejected")).toBe(true);
+    const attention = filterApplications(items, { ...filters, tab: "attention" });
+    expect(
+      attention.every(
+        (application) => application.status !== "received" && application.status !== "rejected",
       ),
     ).toBe(true);
   });

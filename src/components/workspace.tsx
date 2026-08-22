@@ -74,7 +74,9 @@ export function Workspace({
         ? "archive"
         : route === "attention"
           ? "attention"
-          : "all";
+          : route === "rejected"
+            ? "rejected"
+            : "all";
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [language, setLanguage] = useState("all");
@@ -188,6 +190,12 @@ export function Workspace({
       }),
     [applications, search, status, language, sort, tab, dateFrom, dateTo, connectionId],
   );
+  const boardApplications =
+    view === "board"
+      ? filtered.filter((application) => application.status !== "received")
+      : filtered;
+  const acknowledgmentsOnly =
+    view === "board" && filtered.length > 0 && boardApplications.length === 0;
   function go(s: string, t = "all") {
     router.push(workspacePath(s, t, demo));
     setMobileNav(false);
@@ -221,10 +229,19 @@ export function Workspace({
         ? "Archive"
         : tab === "attention"
           ? "Needs attention"
-          : "Applications";
+          : tab === "rejected"
+            ? "Rejected applications"
+            : "Applications";
   const nextSteps = active.filter((a) => ["interview", "next_step"].includes(a.status));
   const offers = active.filter((a) => a.status === "offer");
   const review = active.filter((a) => a.status === "review");
+  const attentionStatuses = ["interview", "next_step", "offer", "review"];
+  const visibleLanes =
+    tab === "attention"
+      ? lanes.filter((lane) => lane.statuses.some((status) => attentionStatuses.includes(status)))
+      : tab === "rejected"
+        ? lanes.filter((lane) => lane.id === "rejected")
+        : lanes;
   if (demo ? !clientReady : authLoading || !user)
     return (
       <div className="workspace-loading">
@@ -519,9 +536,9 @@ export function Workspace({
                   >
                     <button
                       role="tab"
-                      aria-selected={tab === "all" || tab === "starred" || tab === "archive"}
-                      className={tab !== "attention" ? "selected" : ""}
-                      onClick={() => setTab(tab === "starred" || tab === "archive" ? tab : "all")}
+                      aria-selected={!["attention", "rejected"].includes(tab)}
+                      className={!["attention", "rejected"].includes(tab) ? "selected" : ""}
+                      onClick={() => setTab(["starred", "archive"].includes(tab) ? tab : "all")}
                     >
                       {tab === "starred"
                         ? "Saved applications"
@@ -545,6 +562,17 @@ export function Workspace({
                       >
                         Needs attention
                         <span>{nextSteps.length + offers.length + review.length}</span>
+                      </button>
+                    )}
+                    {!["starred", "archive"].includes(tab) && (
+                      <button
+                        role="tab"
+                        aria-selected={tab === "rejected"}
+                        className={tab === "rejected" ? "selected" : ""}
+                        onClick={() => setTab("rejected")}
+                      >
+                        Rejected
+                        <span>{active.filter((a) => a.status === "rejected").length}</span>
                       </button>
                     )}
                   </div>
@@ -698,7 +726,7 @@ export function Workspace({
                       <Skeleton key={i} variant="rounded" height={260} />
                     ))}
                   </div>
-                ) : filtered.length === 0 ? (
+                ) : (view === "board" ? boardApplications : filtered).length === 0 ? (
                   <div className="empty-state">
                     <span>
                       <Inbox size={31} strokeWidth={1.4} />
@@ -706,30 +734,54 @@ export function Workspace({
                     <h3>
                       {applications.length === 0
                         ? "Your next chapter starts with a connection."
-                        : "A little quiet here."}
+                        : acknowledgmentsOnly
+                          ? "Routine acknowledgments are tucked away."
+                          : "A little quiet here."}
                     </h3>
                     <p>
                       {applications.length === 0
                         ? "Connect your email to bring your application replies into view."
-                        : "No applications match this view. Try a different search or filter."}
+                        : acknowledgmentsOnly
+                          ? "You can still find these replies in List view when you need them."
+                          : "No applications match this view. Try a different search or filter."}
                     </p>
                     <button
                       className="button button-dark"
                       onClick={() =>
                         applications.length === 0
                           ? go("connections")
-                          : (resetFilters(), setTab("all"))
+                          : acknowledgmentsOnly
+                            ? setView("list")
+                            : (resetFilters(), setTab("all"))
                       }
                     >
-                      {applications.length === 0 ? "Connect an inbox" : "Show all applications"}
+                      {applications.length === 0
+                        ? "Connect an inbox"
+                        : acknowledgmentsOnly
+                          ? "View list"
+                          : "Show all applications"}
                       <ArrowUpRight size={16} />
                     </button>
                   </div>
                 ) : view === "board" ? (
                   <div className="kanban-scroll">
-                    <div className="kanban-board">
-                      {lanes.map((lane) => {
-                        const cards = filtered.filter((a) => lane.statuses.includes(a.status));
+                    <div
+                      className="kanban-board"
+                      style={{
+                        gridTemplateColumns:
+                          tab === "rejected"
+                            ? "minmax(min(100%, 420px), 420px)"
+                            : `repeat(${visibleLanes.length}, minmax(168px, 1fr))`,
+                        minWidth:
+                          tab === "rejected"
+                            ? 0
+                            : `${visibleLanes.length * 168 + (visibleLanes.length - 1) * 12}px`,
+                      }}
+                    >
+                      {visibleLanes.map((lane) => {
+                        const cards = boardApplications.filter((a) =>
+                          lane.statuses.includes(a.status),
+                        );
                         return (
                           <section
                             className={`kanban-lane lane-${lane.id}`}
@@ -819,8 +871,14 @@ export function Workspace({
                 )}
                 <div className="board-footer">
                   <span>
-                    {filtered.length} {filtered.length === 1 ? "application" : "applications"} in
-                    view<span className="dot-separator">·</span>
+                    {(view === "board" ? boardApplications : filtered).length}{" "}
+                    {(view === "board" ? boardApplications : filtered).length === 1
+                      ? "application"
+                      : "applications"}{" "}
+                    in view<span className="dot-separator">·</span>
+                    {view === "board" && boardApplications.length < filtered.length
+                      ? `${filtered.length - boardApplications.length} acknowledgments shown in List view · `
+                      : ""}
                     {demo ? "Sample data" : "Read-only connections"}
                   </span>
                   <span>
