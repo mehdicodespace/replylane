@@ -39,6 +39,18 @@ describe("classification boundary", () => {
     expect(assessmentStageStatus("Invitation to interview", "interview")).toBe("interview");
     expect(assessmentStageStatus("ارزیابی اولیه", "received", true)).toBe("received");
   });
+  it("treats an explicit resume-viewed notice as received instead of needs review", () => {
+    const viewed =
+      "رزومه شما برای موقعیت شغلی AI Vibe Coder توسط شرکت کانون تبلیغاتی ایران نوین مشاهده شد.";
+    expect(assessmentStageStatus(viewed, "review")).toBe("received");
+    expect(
+      assessmentStageStatus(`${viewed} شما به مرحله ارزیابی اولیه دعوت شده‌اید.`, "review"),
+    ).toBe("next_step");
+    expect(assessmentStageStatus(`${viewed} برای مصاحبه با ما تماس بگیرید.`, "review")).toBe(
+      "review",
+    );
+    expect(assessmentStageStatus(viewed, "review", true)).toBe("review");
+  });
   it("routes low-confidence outcomes to review", () =>
     expect(safeClassification({ ...base, confidence: 0.5 }).status).toBe("review"));
   it("retains uncertain relevance for human review", () =>
@@ -92,6 +104,15 @@ describe("search and export", () => {
         (a) => a.starred && !a.archived,
       ),
     ).toBe(true);
+  });
+  it("keeps trashed applications out of regular and archived views", () => {
+    const changed = items.map((application, index) => ({
+      ...application,
+      trashed: index === 0,
+    }));
+    expect(filterApplications(changed, filters)).toHaveLength(items.length - 1);
+    expect(filterApplications(changed, { ...filters, tab: "trash" })).toHaveLength(1);
+    expect(workspacePath("applications", "trash")).toBe("/app/trash");
   });
   it("keeps acknowledgments off the board and gives rejected replies their own tab", () => {
     expect(lanes.some((lane) => lane.id === "received")).toBe(false);

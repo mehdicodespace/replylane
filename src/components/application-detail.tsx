@@ -11,6 +11,7 @@ import {
   Mail,
   ArrowUpRight,
   Archive,
+  Trash2,
   Check,
   Clock3,
 } from "lucide-react";
@@ -327,24 +328,48 @@ function Detail({
           ))
         )}
       </section>
+      {!a.trashed && (
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<Archive size={16} />}
+          disabled={busy}
+          onClick={async () => {
+            try {
+              await onPatch(a.id, { archived: !a.archived });
+              onClose();
+            } catch (e) {
+              setError((e as Error).message);
+            }
+          }}
+        >
+          {a.archived ? "Restore to applications" : "Archive in Replylane"}
+        </Button>
+      )}
       <Button
         fullWidth
         variant="outlined"
-        startIcon={<Archive size={16} />}
+        color={a.trashed ? "primary" : "error"}
+        startIcon={<Trash2 size={16} />}
         disabled={busy}
         onClick={async () => {
           try {
-            await onPatch(a.id, { archived: !a.archived });
+            await onPatch(
+              a.id,
+              a.trashed ? { trashed: false } : { trashed: true, archived: false },
+            );
             onClose();
           } catch (e) {
             setError((e as Error).message);
           }
         }}
       >
-        {a.archived ? "Restore to applications" : "Archive in Replylane"}
+        {a.trashed ? "Restore from Trash" : "Move to Trash"}
       </Button>
       <p className="muted small detail-bottom-note">
-        Archiving here only changes your Replylane workspace.
+        {a.trashed
+          ? "Restore this reply whenever you want it back in your applications."
+          : "Archive or trash only changes your Replylane workspace."}
       </p>
     </div>
   );

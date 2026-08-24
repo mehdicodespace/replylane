@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { applicationPatchSchema } from "@/lib/domain";
+import { applicationPatchSchema, assessmentStageStatus } from "@/lib/domain";
 import { authenticate, userRef, responseError, jsonBody, AppError, db } from "@/lib/server/core";
 export const runtime = "nodejs";
 type Context = { params: Promise<{ id: string }> };
@@ -34,7 +34,18 @@ export async function GET(request: Request, context: Context) {
       .limit(100)
       .get();
     return NextResponse.json(
-      { events: events.docs.map((d) => d.data()) },
+      {
+        events: events.docs.map((d) => {
+          const event = d.data();
+          return {
+            ...event,
+            status: assessmentStageStatus(
+              `${event.subject || ""}\n${event.excerpt || ""}\n${event.summary || ""}`,
+              event.status,
+            ),
+          };
+        }),
+      },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

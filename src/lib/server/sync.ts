@@ -9,6 +9,7 @@ import {
   type ConnectionSecret,
 } from "./providers";
 import type { Classification, MailInput, Application } from "../domain";
+import { assessmentStageStatus } from "../domain";
 import { knownServiceMail } from "./mail-rules";
 import { sanitizeEmailHTML } from "./email-html";
 import { cleanEmailText } from "../email-content";
@@ -20,6 +21,12 @@ export async function recordMail(
   result: Classification,
   phase?: "live" | "import",
 ) {
+  const normalizedStatus = assessmentStageStatus(
+    `${mail.subject}\n${mail.text}\n${result.summary}`,
+    result.status,
+  );
+  const classification =
+    normalizedStatus === result.status ? result : { ...result, status: normalizedStatus };
   const receipt = userRef(uid)
     .collection("receipts")
     .doc(hash(`${connectionId}:${mail.id}`));
@@ -45,18 +52,18 @@ export async function recordMail(
     tx.set(receipt, {
       connectionId,
       processedAt: new Date().toISOString(),
-      relevant: result.relevant,
+      relevant: classification.relevant,
       promptVersion: PROMPT_VERSION,
       ...(phase ? { phase, counted: false } : { counted: true }),
     });
-    if (!result.relevant) return;
+    if (!classification.relevant) return;
     const existing = current.data() as Application | undefined;
     const latest = !existing || mail.receivedAt >= existing.receivedAt;
     tx.set(event, {
       id: hash(mail.id),
       subject: mail.subject.slice(0, 500),
-      summary: result.summary,
-      status: result.status,
+      summary: classification.summary,
+      status: classification.status,
       receivedAt: mail.receivedAt,
       excerpt: mail.text.slice(0, 5000),
     });
@@ -66,26 +73,27 @@ export async function recordMail(
       html: mail.html ? sanitizeEmailHTML(mail.html) : null,
       text: cleanEmailText(mail.text).slice(0, 30000),
     });
-    const status = existing?.manualStatus ? existing.status : result.status;
+    const status = existing?.manualStatus ? existing.status : classification.status;
     tx.set(app, {
       id: appId,
-      company: result.company,
-      role: result.role,
+      company: classification.company,
+      role: classification.role,
       subject: mail.subject.slice(0, 500),
       sender: mail.sender.slice(0, 300),
       senderEmail: mail.senderEmail.slice(0, 300),
-      summary: result.summary,
+      summary: classification.summary,
       excerpt: mail.text.slice(0, 5000),
       status,
-      aiStatus: result.status,
+      aiStatus: classification.status,
       manualStatus: existing?.manualStatus || false,
-      confidence: result.confidence,
-      language: result.language,
+      confidence: classification.confidence,
+      language: classification.language,
       receivedAt: mail.receivedAt,
-      nextAction: result.nextAction,
-      deadline: existing?.deadline || result.deadline,
+      nextAction: classification.nextAction,
+      deadline: existing?.deadline || classification.deadline,
       starred: existing?.starred || false,
       archived: existing?.archived || false,
+      trashed: existing?.trashed || false,
       notes: existing?.notes || "",
       connectionId,
       provider: connection.data()?.provider,

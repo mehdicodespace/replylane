@@ -15,6 +15,7 @@ import {
   Link2,
   Settings as SettingsIcon,
   Archive,
+  Trash2,
   Menu,
   X,
   Download,
@@ -76,7 +77,9 @@ export function Workspace({
           ? "attention"
           : route === "rejected"
             ? "rejected"
-            : "all";
+            : route === "trash"
+              ? "trash"
+              : "all";
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [language, setLanguage] = useState("all");
@@ -163,7 +166,7 @@ export function Workspace({
   const applications = demo ? demoState.applications : live.data?.applications || [];
   const connections = demo ? demoConnections : live.data?.connections || [];
   const pendingImports = connections.filter((c) => !c.importComplete);
-  const active = applications.filter((a) => !a.archived);
+  const active = applications.filter((a) => !a.archived && !a.trashed);
   const mutation = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: ApplicationPatch }) =>
       api(`/api/applications/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
@@ -191,7 +194,7 @@ export function Workspace({
     [applications, search, status, language, sort, tab, dateFrom, dateTo, connectionId],
   );
   const boardApplications =
-    view === "board"
+    view === "board" && tab !== "trash"
       ? filtered.filter((application) => application.status !== "received")
       : filtered;
   const acknowledgmentsOnly =
@@ -231,17 +234,21 @@ export function Workspace({
           ? "Needs attention"
           : tab === "rejected"
             ? "Rejected applications"
-            : "Applications";
+            : tab === "trash"
+              ? "Trash"
+              : "Applications";
   const nextSteps = active.filter((a) => ["interview", "next_step"].includes(a.status));
   const offers = active.filter((a) => a.status === "offer");
   const review = active.filter((a) => a.status === "review");
   const attentionStatuses = ["interview", "next_step", "offer", "review"];
   const visibleLanes =
-    tab === "attention"
-      ? lanes.filter((lane) => lane.statuses.some((status) => attentionStatuses.includes(status)))
-      : tab === "rejected"
-        ? lanes.filter((lane) => lane.id === "rejected")
-        : lanes;
+    tab === "trash"
+      ? [{ id: "trash", label: "Trash", statuses: [...statuses], caption: "Items you moved here" }]
+      : tab === "attention"
+        ? lanes.filter((lane) => lane.statuses.some((status) => attentionStatuses.includes(status)))
+        : tab === "rejected"
+          ? lanes.filter((lane) => lane.id === "rejected")
+          : lanes;
   if (demo ? !clientReady : authLoading || !user)
     return (
       <div className="workspace-loading">
@@ -290,7 +297,9 @@ export function Workspace({
           <button
             onClick={() => go("applications")}
             className={
-              section === "applications" && tab !== "starred" && tab !== "archive" ? "active" : ""
+              section === "applications" && !["starred", "archive", "trash"].includes(tab)
+                ? "active"
+                : ""
             }
           >
             <LayoutGrid size={18} />
@@ -318,6 +327,16 @@ export function Workspace({
           >
             <Archive size={18} />
             Archive
+          </button>
+          <button
+            onClick={() => go("applications", "trash")}
+            className={section === "applications" && tab === "trash" ? "active" : ""}
+          >
+            <Trash2 size={18} />
+            Trash
+            <span className="nav-count">
+              {live.isLoading ? "…" : applications.filter((a) => a.trashed).length}
+            </span>
           </button>
         </nav>
         <div className="sidebar-divider" />
@@ -536,8 +555,10 @@ export function Workspace({
                   >
                     <button
                       role="tab"
-                      aria-selected={!["attention", "rejected"].includes(tab)}
-                      className={!["attention", "rejected"].includes(tab) ? "selected" : ""}
+                      aria-selected={!["attention", "rejected", "trash"].includes(tab)}
+                      className={
+                        !["attention", "rejected", "trash"].includes(tab) ? "selected" : ""
+                      }
                       onClick={() => setTab(["starred", "archive"].includes(tab) ? tab : "all")}
                     >
                       {tab === "starred"
@@ -562,6 +583,17 @@ export function Workspace({
                       >
                         Needs attention
                         <span>{nextSteps.length + offers.length + review.length}</span>
+                      </button>
+                    )}
+                    {!["starred", "archive"].includes(tab) && (
+                      <button
+                        role="tab"
+                        aria-selected={tab === "trash"}
+                        className={tab === "trash" ? "selected" : ""}
+                        onClick={() => setTab("trash")}
+                      >
+                        Trash
+                        <span>{applications.filter((a) => a.trashed).length}</span>
                       </button>
                     )}
                     {!["starred", "archive"].includes(tab) && (
@@ -768,14 +800,12 @@ export function Workspace({
                     <div
                       className="kanban-board"
                       style={{
-                        gridTemplateColumns:
-                          tab === "rejected"
-                            ? "minmax(min(100%, 420px), 420px)"
-                            : `repeat(${visibleLanes.length}, minmax(168px, 1fr))`,
-                        minWidth:
-                          tab === "rejected"
-                            ? 0
-                            : `${visibleLanes.length * 168 + (visibleLanes.length - 1) * 12}px`,
+                        gridTemplateColumns: ["rejected", "trash"].includes(tab)
+                          ? "minmax(min(100%, 420px), 420px)"
+                          : `repeat(${visibleLanes.length}, minmax(168px, 1fr))`,
+                        minWidth: ["rejected", "trash"].includes(tab)
+                          ? 0
+                          : `${visibleLanes.length * 168 + (visibleLanes.length - 1) * 12}px`,
                       }}
                     >
                       {visibleLanes.map((lane) => {

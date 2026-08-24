@@ -207,6 +207,21 @@ describe("durable mail processing", () => {
       [...mocks.database.state.keys()].filter((k: string) => k.includes("/events/")),
     ).toHaveLength(2);
   });
+  it("stores a viewed-only Persian application notice as received", async () => {
+    await recordMail(
+      "alice",
+      "c1",
+      {
+        ...mail("viewed"),
+        subject:
+          "رزومه شما برای موقعیت شغلی AI Vibe Coder توسط شرکت کانون تبلیغاتی ایران نوین مشاهده شد.",
+        text: "رزومه شما برای موقعیت شغلی AI Vibe Coder توسط شرکت کانون تبلیغاتی ایران نوین مشاهده شد.",
+      },
+      { ...result, status: "review", summary: "Your resume has been viewed." },
+    );
+    const app = mocks.database.state.get(`users/alice/applications/${hash("c1:thread1")}`);
+    expect(app).toMatchObject({ status: "received", aiStatus: "received" });
+  });
   it("preserves manual status, notes, saved state and deadline on new mail", async () => {
     await recordMail("alice", "c1", mail("m1"), result);
     const key = `users/alice/applications/${hash("c1:thread1")}`;

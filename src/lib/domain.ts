@@ -20,6 +20,10 @@ export const statusLabels: Record<Status, string> = {
 
 const assessmentStagePattern =
   /(?:initial\s+(?:assessment|evaluation|screening)|preliminary\s+(?:assessment|evaluation)|(?:online|technical|skills?)\s+(?:assessment|test)|(?:invited|selected|shortlisted|moved)\s+(?:to|for)\s+(?:the\s+)?(?:next\s+)?(?:assessment|evaluation|stage)|ارزیابی\s+(?:اولیه|تخصصی|فنی)|بررسی\s+اولیه|(?:به|برای)\s+مرحله\s+(?:ارزیابی|بررسی)|آزمون\s+(?:آنلاین|فنی|تخصصی)|تست\s+(?:آنلاین|فنی|تخصصی)|erste\s+(?:bewertung|auswahl)|eignungstest|testaufgabe|évaluation\s+(?:initiale|technique)|prueba\s+(?:técnica|de\s+selección))/i;
+const viewedReceiptPattern =
+  /(?:(?:application|résumé|resume|cv|profile).{0,100}(?:viewed|seen|opened)|(?:viewed|seen|opened).{0,100}(?:application|résumé|resume|cv|profile)|رزومه.{0,120}(?:مشاهده|دیده)\s*(?:شد|شده|گردید|شده است)?|(?:مشاهده|دیده)\s*(?:شد|شده|گردید).{0,120}رزومه)/i;
+const explicitOutcomePattern =
+  /\b(?:interview|offer|shortlisted|not selected|rejected|declined|assessment|test|next step|eignungstest|abgelehnt|angebot|vorstellungsgespräch|einladung|zusage|entrevista|entretien)\b|مصاحبه|دعوت|منتخب|انتخاب|پذیرش|قبول|رد|عدم انتخاب|ارزیابی|آزمون|مرحله|استخدام|پیشنهاد شغلی/i;
 
 export function assessmentStageStatus(text: string, status: Status, manualStatus = false): Status {
   if (manualStatus || !["received", "review"].includes(status)) return status;
@@ -29,7 +33,14 @@ export function assessmentStageStatus(text: string, status: Status, manualStatus
     .replace(/[ي]/g, "ی")
     .replace(/[ك]/g, "ک")
     .replace(/\s+/g, " ");
-  return assessmentStagePattern.test(normalized) ? "next_step" : status;
+  if (assessmentStagePattern.test(normalized)) return "next_step";
+  if (
+    status === "review" &&
+    viewedReceiptPattern.test(normalized) &&
+    !explicitOutcomePattern.test(normalized)
+  )
+    return "received";
+  return status;
 }
 export const lanes: { id: string; label: string; statuses: Status[]; caption: string }[] = [
   {
@@ -66,6 +77,7 @@ export interface Application {
   deadline: string | null;
   starred: boolean;
   archived: boolean;
+  trashed?: boolean;
   notes: string;
   manualStatus: boolean;
   connectionId: string;
@@ -105,6 +117,7 @@ export const applicationPatchSchema = z
     status: z.enum(statuses).optional(),
     starred: z.boolean().optional(),
     archived: z.boolean().optional(),
+    trashed: z.boolean().optional(),
     notes: z.string().max(5000).optional(),
     deadline: z.union([z.iso.date(), z.null()]).optional(),
   })
@@ -160,6 +173,7 @@ export function filterApplications(items: Application[], f: Filters) {
   const needle = f.search.trim().normalize("NFKC").toLocaleLowerCase();
   return items
     .filter((a) => {
+      if (f.tab === "trash" ? !a.trashed : a.trashed) return false;
       if (f.tab === "archive" ? !a.archived : a.archived) return false;
       if (f.tab === "starred" && !a.starred) return false;
       if (f.tab === "rejected" && a.status !== "rejected") return false;
