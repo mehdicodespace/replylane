@@ -518,7 +518,6 @@ export function Workspace({
               demo={demo}
               loading={!demo && live.isLoading}
               loadError={!demo && live.isError && !live.data}
-              onExport={() => exportData(true)}
               onNotice={setNotice}
               requests={live.data?.usage.requests || 0}
               requestLimit={live.data?.usage.requestLimit || 300}

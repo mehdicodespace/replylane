@@ -5195,6 +5195,98 @@ html[data-theme="dark"] .attention-icon {
   flex-shrink: 0;
   align-self: flex-start;
 }
+
+/* Keep long application lanes contained while preserving a distinct status accent. */
+.password-change {
+  display: grid;
+  gap: 12px;
+  max-width: 440px;
+}
+.password-reset-link {
+  justify-self: start;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+.settings-card > .settings-info {
+  margin-top: 18px;
+}
+.kanban-lane {
+  --lane-accent: #9ba8b8;
+}
+.lane-progress {
+  --lane-accent: #a78bfa;
+}
+.lane-offer {
+  --lane-accent: #60a5fa;
+}
+.lane-rejected {
+  --lane-accent: #f87171;
+}
+.lane-review {
+  --lane-accent: #fbbf24;
+}
+.lane-trash {
+  --lane-accent: #fb7185;
+}
+.kanban-lane > header i {
+  width: 7px;
+  height: 7px;
+  background: var(--lane-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lane-accent) 16%, transparent);
+}
+.lane-progress > header i,
+.lane-offer > header i,
+.lane-rejected > header i,
+.lane-review > header i {
+  background: var(--lane-accent);
+}
+.lane-cards {
+  max-height: min(62vh, 640px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 4px 4px 1px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.lane-cards::-webkit-scrollbar {
+  width: 7px;
+}
+.lane-cards::-webkit-scrollbar-track {
+  background: transparent;
+}
+.lane-cards::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background-clip: padding-box;
+}
+.compact-card {
+  --card-accent: #94a3b8;
+  border-left: 3px solid var(--card-accent);
+}
+.compact-card.card-interview,
+.compact-card.card-next_step {
+  --card-accent: #a78bfa;
+}
+.compact-card.card-offer {
+  --card-accent: #60a5fa;
+}
+.compact-card.card-rejected {
+  --card-accent: #f87171;
+}
+.compact-card.card-review {
+  --card-accent: #fbbf24;
+}
+.compact-card.card-received {
+  --card-accent: #94a3b8;
+}
+.compact-card .company-avatar {
+  background: color-mix(in srgb, var(--card-accent) 18%, var(--surface));
+  color: var(--card-accent);
+}
 [dir="rtl"],
 [lang="fa"] {
   font-family: "Vazirmatn Variable", Tahoma, sans-serif;

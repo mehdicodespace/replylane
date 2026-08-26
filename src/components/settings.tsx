@@ -10,15 +10,20 @@ import {
   DialogActions,
   TextField,
 } from "@mui/material";
-import { sendPasswordResetEmail, signOut } from "firebase/auth";
-import { Moon, Sun, ShieldCheck, Download, RotateCcw, Trash2, Check, Mail } from "lucide-react";
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  sendPasswordResetEmail,
+  signOut,
+  updatePassword,
+} from "firebase/auth";
+import { Moon, Sun, ShieldCheck, RotateCcw, Trash2, Check, Mail, KeyRound } from "lucide-react";
 import { useAuth } from "./providers";
 import { useUI, useDemo } from "@/lib/store";
 import { api, clientAuth } from "@/lib/firebase-client";
 
 export function Settings({
   demo,
-  onExport,
   onNotice,
   requests,
   requestLimit,
@@ -26,7 +31,6 @@ export function Settings({
   loadError = false,
 }: {
   demo: boolean;
-  onExport: () => void;
   onNotice: (s: string) => void;
   requests: number;
   requestLimit: number;
@@ -40,6 +44,49 @@ export function Settings({
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordNotice, setPasswordNotice] = useState("");
+  const passwordAccount = user?.providerData.some((provider) => provider.providerId === "password");
+  async function changePassword() {
+    setPasswordError("");
+    setPasswordNotice("");
+    if (!user?.email || !passwordAccount) return;
+    if (newPassword.length < 6) {
+      setPasswordError("Choose a password with at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("The new passwords don’t match.");
+      return;
+    }
+    setPasswordBusy(true);
+    try {
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordNotice("Your password has been updated.");
+    } catch (cause) {
+      const code = (cause as { code?: string }).code;
+      setPasswordError(
+        code === "auth/wrong-password" || code === "auth/invalid-credential"
+          ? "The current password is incorrect."
+          : code === "auth/weak-password"
+            ? "Choose a stronger password with at least 6 characters."
+            : code === "auth/requires-recent-login"
+              ? "For security, sign out and back in, then try again."
+              : "Couldn’t update your password. Please try again.",
+      );
+    } finally {
+      setPasswordBusy(false);
+    }
+  }
   async function remove() {
     setBusy(true);
     setError("");
@@ -98,32 +145,71 @@ export function Settings({
             <Link href="/sign-up" className="text-link">
               Create your own workspace ↗
             </Link>
+          ) : passwordAccount ? (
+            <div className="password-change">
+              <div className="settings-info">
+                <KeyRound size={17} />
+                <span>
+                  Change your password here with your current password. No email link needed.
+                </span>
+              </div>
+              <TextField
+                fullWidth
+                size="small"
+                type="password"
+                label="Current password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                type="password"
+                label="New password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                type="password"
+                label="Confirm new password"
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+              />
+              {passwordError && <Alert severity="error">{passwordError}</Alert>}
+              {passwordNotice && <Alert severity="success">{passwordNotice}</Alert>}
+              <Button
+                variant="outlined"
+                onClick={() => void changePassword()}
+                disabled={passwordBusy || !currentPassword || !newPassword || !confirmPassword}
+              >
+                {passwordBusy ? "Updating…" : "Update password"}
+              </Button>
+              <button
+                className="text-link password-reset-link"
+                onClick={async () => {
+                  try {
+                    if (!user?.email) throw new Error("No account email is available.");
+                    await sendPasswordResetEmail(clientAuth(), user.email);
+                    onNotice("Password reset link sent. Check your inbox.");
+                  } catch {
+                    onNotice("Couldn’t send the reset email. Please try again later.");
+                  }
+                }}
+              >
+                Forgot your current password? Send a reset link
+              </button>
+            </div>
           ) : (
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={async () => {
-                try {
-                  await sendPasswordResetEmail(clientAuth(), user!.email!);
-                  onNotice("Password reset link sent. Check your inbox.");
-                } catch {
-                  onNotice("Couldn't send the reset email. Please try again later.");
-                }
-              }}
-            >
-              Send password reset link
-            </Button>
+            <div className="settings-info">
+              <KeyRound size={17} />
+              <span>Your password is managed by your sign-in provider.</span>
+            </div>
           )}
-        </section>
-        <section className="settings-card">
-          <h3>Your data goes with you.</h3>
-          <p>
-            Export all application cards as a spreadsheet-friendly CSV. Notes and next steps come
-            along.
-          </p>
-          <Button variant="outlined" startIcon={<Download size={16} />} onClick={onExport}>
-            Export applications
-          </Button>
           <div className="settings-info">
             <ShieldCheck size={17} />
             <Link href="/privacy">How your information is handled ↗</Link>
