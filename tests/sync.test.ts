@@ -193,6 +193,22 @@ describe("durable mail processing", () => {
       [...mocks.database.state.keys()].filter((k: string) => k.includes("/events/")),
     ).toHaveLength(1);
   });
+  it("queues Telegram alerts for new live replies but keeps historical imports quiet", async () => {
+    mocks.database.state.set("users/alice", { telegram: { chatId: "123456" } });
+    await recordMail("alice", "c1", mail("older"), result, "import");
+    await recordMail("alice", "c1", mail("live"), result, "live");
+    const queued = [...mocks.database.state.entries()].filter(([path]) =>
+      path.startsWith("telegramOutbox/"),
+    );
+    expect(queued).toHaveLength(1);
+    expect(queued[0][1]).toMatchObject({
+      uid: "alice",
+      company: "Example",
+      status: "interview",
+      summary: "Interview invitation",
+    });
+    expect(JSON.stringify(queued[0][1])).not.toContain("We would like to meet you");
+  });
   it("keeps older imports from replacing a newer interview", async () => {
     await recordMail("alice", "c1", mail("new"), result);
     await recordMail("alice", "c1", mail("old", "2026-10-01T10:00:00.000Z"), {

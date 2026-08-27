@@ -2,7 +2,7 @@ import type { Config } from "@netlify/functions";
 import { appURL, env } from "../../src/lib/server/core";
 
 export default async () => {
-  if (process.env.MAIL_PROCESSING_ENABLED !== "true") return;
+  if (process.env.MAIL_PROCESSING_ENABLED !== "true" && !process.env.TELEGRAM_BOT_TOKEN) return;
   try {
     const response = await fetch(`${appURL()}/.netlify/functions/sync-mail-background`, {
       method: "POST",

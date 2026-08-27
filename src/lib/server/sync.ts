@@ -13,6 +13,7 @@ import { assessmentStageStatus } from "../domain";
 import { knownServiceMail } from "./mail-rules";
 import { sanitizeEmailHTML } from "./email-html";
 import { cleanEmailText } from "../email-content";
+import { queueTelegramNotification } from "./telegram";
 
 export async function recordMail(
   uid: string,
@@ -99,6 +100,15 @@ export async function recordMail(
       provider: connection.data()?.provider,
       messageUrl: mail.messageUrl,
     });
+    if (phase === "live" && latest && owner.data()?.telegram?.chatId) {
+      queueTelegramNotification(tx, uid, `${connectionId}:${mail.id}`, {
+        company: classification.company,
+        role: classification.role,
+        status: classification.status,
+        summary: classification.summary,
+        receivedAt: mail.receivedAt,
+      });
+    }
   });
 }
 

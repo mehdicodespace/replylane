@@ -34,6 +34,7 @@ Open [localhost:3000](http://localhost:3000), create an account, and verify your
 - New mail only, or a bounded import of the last 30 or 60 days.
 - Import older emails from an existing connection, with live counts, retry status, and date range visible in the app.
 - A scheduled worker, durable checkpoints, duplicate receipts, retries, and shared AI budgets.
+- Optional Telegram notifications for newly classified live replies, with a short summary and category.
 - CSV export, connection pause/disconnect, and account deletion.
 
 Interviews and assessments share the **Moving forward** board column, with distinct status badges. No original emails are moved, deleted, or sent.
@@ -43,6 +44,8 @@ Interviews and assessments share the **Moving forward** board column, with disti
 The integration code is included, but live accounts require your service configuration. Follow [SETUP.md](docs/SETUP.md) for Firebase, Groq, mailbox providers, and Netlify. Keep secrets in environment variables. Start with your own account before opening registration to other people.
 
 For a custom address such as `work@your-domain.com`, select **Other / custom domain (IMAP)**. Use the IMAP server supplied by your mail host, TLS port 993, and its app password. SMTP is not required. IMAP currently checks **Inbox**; it does not scan every custom folder.
+
+Telegram notifications are optional. Create a bot with Telegram’s BotFather, then configure `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, and a random `TELEGRAM_WEBHOOK_SECRET` on the server. Set `APP_URL` to the deployed HTTPS address. Replylane registers the webhook when a signed-in user starts linking Telegram; the user then opens the one-time link and presses **Start** in a private chat. The bot sends new live reply categories and summaries; historical imports stay quiet. Never put the bot token in a `NEXT_PUBLIC_` variable or in source control.
 
 If you started with new emails only, open **Connected inboxes → Import older emails** and choose 30 or 60 days. The inbox card shows progress while application cards appear as replies are found. The app continues queued work while it is open; Netlify's scheduled worker handles unattended imports once deployed. Imports respect the per-account and shared AI budgets, so a large mailbox may take more than one day.
 

@@ -15,7 +15,6 @@ import {
   Link2,
   Settings as SettingsIcon,
   Archive,
-  Trash2,
   Menu,
   X,
   Download,
@@ -327,16 +326,6 @@ export function Workspace({
           >
             <Archive size={18} />
             Archive
-          </button>
-          <button
-            onClick={() => go("applications", "trash")}
-            className={section === "applications" && tab === "trash" ? "active" : ""}
-          >
-            <Trash2 size={18} />
-            Trash
-            <span className="nav-count">
-              {live.isLoading ? "…" : applications.filter((a) => a.trashed).length}
-            </span>
           </button>
         </nav>
         <div className="sidebar-divider" />

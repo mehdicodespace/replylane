@@ -1,6 +1,7 @@
 import type { Config } from "@netlify/functions";
 import { timingSafeEqual } from "node:crypto";
 import { scheduledSync } from "../../src/lib/server/sync";
+import { drainTelegramOutbox } from "../../src/lib/server/telegram";
 
 export default async (request: Request) => {
   const secret = process.env.CRON_SECRET;
@@ -13,7 +14,8 @@ export default async (request: Request) => {
   )
     return;
   try {
-    await scheduledSync(36);
+    if (process.env.MAIL_PROCESSING_ENABLED === "true") await scheduledSync(36);
+    await drainTelegramOutbox(30);
   } catch {
     console.error("Background mail sync paused; queued work is retained.");
   }

@@ -54,6 +54,13 @@ export default function Privacy() {
         API access requires a verified, authenticated account and is restricted to that account’s
         records.
       </p>
+      <p>
+        If you connect Telegram, Firestore stores your Telegram chat identifier so the bot can send
+        you private notifications. For newly processed replies, the bot receives the company, role,
+        result category, and a short generated summary. Older imported mail does not trigger
+        notifications. Disconnect Telegram in Settings or send /stop to the bot to remove the link.
+        Telegram processes messages under its own terms and privacy policy.
+      </p>
       <h2>Your choices</h2>
       <p>
         Choose new mail only, the last 30 days, or the last 60 days. Pause a connection to stop
@@ -71,10 +78,10 @@ export default function Privacy() {
       </p>
       <h2>Browser storage and logs</h2>
       <p>
-        The theme and board/list preference are stored locally. Firebase manages authentication storage
-        for signed-in users. There are no advertising or analytics trackers in this project. The app’s
-        own error logs omit message content and credentials; hosting services may still retain
-        request metadata.
+        The theme and board/list preference are stored locally. Firebase manages authentication
+        storage for signed-in users. There are no advertising or analytics trackers in this project.
+        The app’s own error logs omit message content and credentials; hosting services may still
+        retain request metadata.
       </p>
       <h2>AI can be wrong</h2>
       <p>

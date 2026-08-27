@@ -66,6 +66,10 @@ export function memoryDB() {
         fn({
           get: (ref: any) => ref.get(),
           set: (ref: any, data: Data, opts?: any) => ref.set(data, opts),
+          create: (ref: any, data: Data) => {
+            if (state.has(ref.path)) throw new Error("Document already exists");
+            return ref.set(data);
+          },
           update: (ref: any, data: Data) => ref.update(data),
         }),
       );

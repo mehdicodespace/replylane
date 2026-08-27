@@ -163,6 +163,19 @@ In production, `sync-mail` runs every minute and invokes the protected `sync-mai
 
 After deployment, test the real callback and verify a scheduled sync while the browser is closed. A successful local build does not verify those external integrations.
 
+## Optional: Telegram notifications
+
+Create a bot with Telegram’s [BotFather](https://t.me/BotFather) and keep its token private. Set these server-side environment variables locally or in Netlify:
+
+```text
+TELEGRAM_BOT_TOKEN=<token from BotFather>
+TELEGRAM_BOT_USERNAME=<bot username, without @>
+TELEGRAM_WEBHOOK_SECRET=<random base64url secret>
+APP_URL=https://<your deployed site>
+```
+
+You can generate a webhook secret with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`. Restart or redeploy after changing environment variables. In Settings, a signed-in user selects **Connect Telegram**, opens the one-time link, and presses **Start** in the bot’s private chat. Replylane registers its Telegram webhook automatically. Test the connection and a newly received reply before inviting other users. Users can disconnect in Replylane or send `/stop` to the bot. Never expose the bot token in browser variables or client code.
+
 ## Before accepting public registrations
 
 Supply the operator’s identity and privacy contact in `/privacy` and `/terms`, establish retention and account-deletion handling with your infrastructure providers, complete applicable OAuth verification, and review the app with representative real-world fixtures before opening registration.

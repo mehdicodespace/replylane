@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Alert,
@@ -10,6 +10,7 @@ import {
   DialogActions,
   TextField,
 } from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   EmailAuthProvider,
   reauthenticateWithCredential,
@@ -17,7 +18,18 @@ import {
   signOut,
   updatePassword,
 } from "firebase/auth";
-import { Moon, Sun, ShieldCheck, RotateCcw, Trash2, Check, Mail, KeyRound } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  ShieldCheck,
+  RotateCcw,
+  Trash2,
+  Check,
+  Mail,
+  KeyRound,
+  Send,
+  Unplug,
+} from "lucide-react";
 import { useAuth } from "./providers";
 import { useUI, useDemo } from "@/lib/store";
 import { api, clientAuth } from "@/lib/firebase-client";
@@ -39,6 +51,28 @@ export function Settings({
 }) {
   const { theme, setTheme } = useUI();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [telegramLink, setTelegramLink] = useState("");
+  const telegram = useQuery({
+    queryKey: ["telegram-status"],
+    queryFn: () => api<TelegramStatus>("/api/telegram"),
+    enabled: !demo && Boolean(user),
+    refetchInterval: telegramLink ? 2500 : false,
+  });
+  const connectTelegram = useMutation({
+    mutationFn: () => api<{ url: string }>("/api/telegram", { method: "POST" }),
+    onSuccess: ({ url }) => setTelegramLink(url),
+  });
+  const disconnectTelegram = useMutation({
+    mutationFn: () => api<{ ok: boolean }>("/api/telegram", { method: "DELETE" }),
+    onSuccess: async () => {
+      setTelegramLink("");
+      await queryClient.invalidateQueries({ queryKey: ["telegram-status"] });
+    },
+  });
+  useEffect(() => {
+    if (telegram.data?.connected) setTelegramLink("");
+  }, [telegram.data?.connected]);
   const reset = useDemo((s) => s.reset);
   const [deleting, setDeleting] = useState(false);
   const [confirm, setConfirm] = useState("");
@@ -240,6 +274,79 @@ export function Settings({
             can cover several emails; queued messages continue after the daily reset.
           </p>
         </section>
+        <section className="settings-card telegram-settings-card">
+          <h3>Telegram notifications</h3>
+          <p>Get a private message for each new reply, with its category and a short summary.</p>
+          {demo ? (
+            <Link href="/sign-up" className="text-link">
+              Create an account to connect Telegram ↗
+            </Link>
+          ) : telegram.isLoading ? (
+            <p className="small muted" role="status">
+              Checking your Telegram connection…
+            </p>
+          ) : telegram.isError ? (
+            <Alert severity="error">
+              Telegram connection status couldn’t load. Try refreshing.
+            </Alert>
+          ) : !telegram.data?.configured ? (
+            <div className="settings-info">
+              <Send size={17} />
+              <span>The bot has not been configured for this deployment yet.</span>
+            </div>
+          ) : telegram.data.connected ? (
+            <div className="telegram-settings-actions">
+              <div className="settings-info telegram-connected">
+                <span className="telegram-status-dot" />
+                <span>
+                  Connected to @{telegram.data.botUsername}. Older imported emails won’t send
+                  alerts.
+                </span>
+              </div>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Unplug size={15} />}
+                disabled={disconnectTelegram.isPending}
+                onClick={() => disconnectTelegram.mutate()}
+              >
+                {disconnectTelegram.isPending ? "Disconnecting…" : "Disconnect Telegram"}
+              </Button>
+              {disconnectTelegram.isError && (
+                <Alert severity="error">Couldn’t disconnect Telegram. Please try again.</Alert>
+              )}
+            </div>
+          ) : (
+            <div className="telegram-settings-actions">
+              <div className="settings-info">
+                <Send size={17} />
+                <span>
+                  We’ll send the company, result category, and reply summary. Start a private chat
+                  with the bot to finish linking.
+                </span>
+              </div>
+              <Button
+                variant="outlined"
+                startIcon={<Send size={15} />}
+                disabled={connectTelegram.isPending}
+                onClick={() => connectTelegram.mutate()}
+              >
+                {connectTelegram.isPending ? "Preparing Telegram…" : "Connect Telegram"}
+              </Button>
+              {connectTelegram.isError && (
+                <Alert severity="error">{(connectTelegram.error as Error).message}</Alert>
+              )}
+              {telegramLink && (
+                <Alert severity="info" className="telegram-link-prompt">
+                  <span>Open Telegram and press Start to connect.</span>
+                  <a href={telegramLink} target="_blank" rel="noreferrer">
+                    Open Telegram ↗
+                  </a>
+                </Alert>
+              )}
+            </div>
+          )}
+        </section>
       </div>
       <section className="danger-zone">
         <div>
@@ -299,3 +406,9 @@ export function Settings({
     </div>
   );
 }
+
+type TelegramStatus = {
+  configured: boolean;
+  connected: boolean;
+  botUsername: string | null;
+};

@@ -5265,7 +5265,9 @@ html[data-theme="dark"] .attention-icon {
 }
 .compact-card {
   --card-accent: #94a3b8;
-  border-left: 3px solid var(--card-accent);
+  background: color-mix(in srgb, var(--card-accent) 8%, var(--surface));
+  border-color: color-mix(in srgb, var(--card-accent) 35%, var(--border));
+  border-inline-start: 4px solid var(--card-accent);
 }
 .compact-card.card-interview,
 .compact-card.card-next_step {
@@ -5286,6 +5288,31 @@ html[data-theme="dark"] .attention-icon {
 .compact-card .company-avatar {
   background: color-mix(in srgb, var(--card-accent) 18%, var(--surface));
   color: var(--card-accent);
+}
+.telegram-settings-actions {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+.telegram-settings-actions .settings-info {
+  margin: 4px 0;
+}
+.telegram-connected {
+  color: var(--ink);
+}
+.telegram-status-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #34d399 16%, transparent);
+}
+.telegram-link-prompt a {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--primary);
+  font-weight: 600;
 }
 [dir="rtl"],
 [lang="fa"] {

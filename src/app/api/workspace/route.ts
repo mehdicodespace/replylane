@@ -98,9 +98,26 @@ export async function DELETE(request: Request) {
     if (body.confirmation !== "DELETE")
       return NextResponse.json({ error: "Type DELETE to confirm." }, { status: 400 });
     await userRef(uid).set({ deleting: true }, { merge: true });
+    const owner = await userRef(uid).get();
+    const chatId = owner.data()?.telegram?.chatId as string | undefined;
+    if (chatId)
+      await db()
+        .collection("telegramChatLinks")
+        .doc(hash(String(chatId)))
+        .delete();
     const connections = await db().collection("connections").where("uid", "==", uid).get();
     for (const connection of connections.docs) await connection.ref.delete();
-    for (const action of ["connect", "sync", "import"])
+    const [outbox, linkTokens] = await Promise.all([
+      db().collection("telegramOutbox").where("uid", "==", uid).get(),
+      db().collection("telegramLinkTokens").where("uid", "==", uid).get(),
+    ]);
+    const auxiliaryDocs = [...outbox.docs, ...linkTokens.docs];
+    for (let start = 0; start < auxiliaryDocs.length; start += 400) {
+      const batch = db().batch();
+      auxiliaryDocs.slice(start, start + 400).forEach((doc) => batch.delete(doc.ref));
+      await batch.commit();
+    }
+    for (const action of ["connect", "sync", "import", "telegram-link"])
       await db()
         .collection("rateLimits")
         .doc(hash(`${uid}:${action}`))
