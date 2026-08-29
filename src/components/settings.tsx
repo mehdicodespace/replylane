@@ -55,7 +55,16 @@ export function Settings({
   const [telegramLink, setTelegramLink] = useState("");
   const telegram = useQuery({
     queryKey: ["telegram-status"],
-    queryFn: () => api<TelegramStatus>("/api/telegram"),
+    queryFn: async () => {
+      const status = await api<TelegramStatus>("/api/telegram");
+      if (status.localPolling && telegramLink && !status.connected) {
+        await api<{ received?: number; busy?: boolean }>("/api/telegram/poll", {
+          method: "POST",
+        });
+        return api<TelegramStatus>("/api/telegram");
+      }
+      return status;
+    },
     enabled: !demo && Boolean(user),
     refetchInterval: telegramLink ? 2500 : false,
   });
@@ -410,5 +419,6 @@ export function Settings({
 type TelegramStatus = {
   configured: boolean;
   connected: boolean;
+  localPolling: boolean;
   botUsername: string | null;
 };

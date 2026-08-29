@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { telegramConfigured, validateTelegramSecret } from "@/lib/server/telegram";
+import {
+  telegramConfigured,
+  telegramLocalPollingEnabled,
+  validateTelegramSecret,
+} from "@/lib/server/telegram";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -18,5 +22,15 @@ describe("Telegram connection security", () => {
     expect(telegramConfigured()).toBe(true);
     vi.stubEnv("TELEGRAM_WEBHOOK_SECRET", "");
     expect(telegramConfigured()).toBe(false);
+  });
+
+  it("enables Telegram long polling only for a local development URL", () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("APP_URL", "http://localhost:3000");
+    expect(telegramLocalPollingEnabled()).toBe(true);
+    vi.stubEnv("APP_URL", "https://replylane.example");
+    expect(telegramLocalPollingEnabled()).toBe(false);
+    vi.stubEnv("APP_URL", "http://192.168.1.20:3000");
+    expect(telegramLocalPollingEnabled()).toBe(false);
   });
 });

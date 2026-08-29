@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { authenticate, db, hash, rateLimit, responseError, userRef } from "@/lib/server/core";
-import { createTelegramLink, telegramConfigured } from "@/lib/server/telegram";
+import {
+  createTelegramLink,
+  telegramConfigured,
+  telegramLocalPollingEnabled,
+} from "@/lib/server/telegram";
 
 export const runtime = "nodejs";
 
@@ -11,6 +15,7 @@ export async function GET(request: Request) {
     const telegram = owner.data()?.telegram;
     return NextResponse.json({
       configured: telegramConfigured(),
+      localPolling: telegramConfigured() && telegramLocalPollingEnabled(),
       connected: Boolean(telegram?.chatId),
       linkedAt: telegram?.linkedAt || null,
       botUsername: telegramConfigured()

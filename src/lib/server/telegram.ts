@@ -24,31 +24,54 @@ export function telegramConfigured() {
   );
 }
 
+export function telegramLocalPollingEnabled() {
+  if (process.env.NODE_ENV !== "development") return false;
+  try {
+    const host = new URL(appURL()).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+
 export async function createTelegramLink(uid: string) {
   const { username, secret } = assertConfigured();
   const url = appURL();
-  if (!url.startsWith("https://"))
-    throw new AppError(
-      "Telegram linking needs a public HTTPS app URL. Configure APP_URL for your deployed site.",
-      503,
-    );
+  if (telegramLocalPollingEnabled()) {
+    // Telegram cannot reach localhost. Long polling is the development-only equivalent.
+    const response = await fetch(telegramApi("deleteWebhook"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ drop_pending_updates: false }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const result = (await response.json().catch(() => null)) as { ok?: boolean } | null;
+    if (!response.ok || !result?.ok)
+      throw new AppError("The Telegram bot couldn’t be prepared for local testing.", 502);
+  } else {
+    if (!url.startsWith("https://"))
+      throw new AppError(
+        "Telegram linking needs a public HTTPS app URL. Configure APP_URL for your deployed site.",
+        503,
+      );
 
-  const webhook = await fetch(telegramApi("setWebhook"), {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      url: `${url}/api/telegram/webhook`,
-      secret_token: secret,
-      allowed_updates: ["message"],
-    }),
-    signal: AbortSignal.timeout(10000),
-  });
-  const webhookResult = (await webhook.json().catch(() => null)) as { ok?: boolean } | null;
-  if (!webhook.ok || !webhookResult?.ok)
-    throw new AppError(
-      "The Telegram bot couldn’t be prepared. Check its server configuration and try again.",
-      502,
-    );
+    const webhook = await fetch(telegramApi("setWebhook"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: `${url}/api/telegram/webhook`,
+        secret_token: secret,
+        allowed_updates: ["message"],
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const webhookResult = (await webhook.json().catch(() => null)) as { ok?: boolean } | null;
+    if (!webhook.ok || !webhookResult?.ok)
+      throw new AppError(
+        "The Telegram bot couldn’t be prepared. Check its server configuration and try again.",
+        502,
+      );
+  }
 
   const token = randomBytes(32).toString("base64url");
   await db()
@@ -56,6 +79,56 @@ export async function createTelegramLink(uid: string) {
     .doc(hash(token))
     .set({ uid, expiresAt: Date.now() + 10 * 60 * 1000, createdAt: Date.now() });
   return { url: `https://t.me/${username}?start=${token}` };
+}
+
+export async function pollTelegramUpdates() {
+  if (!telegramLocalPollingEnabled() || !telegramConfigured())
+    throw new AppError("Local Telegram polling is only available in local development.", 403);
+
+  const ref = db().collection("system").doc("telegramLocalPoller");
+  const lock = randomBytes(12).toString("hex");
+  const offset = await db().runTransaction(async (tx) => {
+    const state = await tx.get(ref);
+    if ((state.data()?.lockUntil || 0) > Date.now()) return null;
+    const nextOffset = Number(state.data()?.offset || 0);
+    tx.set(ref, { lock, lockUntil: Date.now() + 15000, offset: nextOffset }, { merge: true });
+    return nextOffset;
+  });
+  if (offset === null) return { busy: true };
+
+  try {
+    const response = await fetch(telegramApi("getUpdates"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ offset, timeout: 0, allowed_updates: ["message"] }),
+      signal: AbortSignal.timeout(8000),
+    });
+    const result = (await response.json().catch(() => null)) as {
+      ok?: boolean;
+      result?: Array<Record<string, unknown>>;
+    } | null;
+    if (!response.ok || !result?.ok || !Array.isArray(result.result))
+      throw new AppError("Telegram could not be checked right now. Try again shortly.", 502);
+
+    let nextOffset = offset;
+    for (const update of result.result) {
+      await handleTelegramUpdate(update);
+      const id = Number(update.update_id);
+      if (Number.isSafeInteger(id)) nextOffset = Math.max(nextOffset, id + 1);
+    }
+    await db().runTransaction(async (tx) => {
+      const state = await tx.get(ref);
+      if (state.data()?.lock === lock)
+        tx.set(ref, { offset: nextOffset, lock: "", lockUntil: 0 }, { merge: true });
+    });
+    return { received: result.result.length };
+  } catch (error) {
+    await db().runTransaction(async (tx) => {
+      const state = await tx.get(ref);
+      if (state.data()?.lock === lock) tx.set(ref, { lock: "", lockUntil: 0 }, { merge: true });
+    });
+    throw error;
+  }
 }
 
 export function validateTelegramSecret(actual: string | null) {

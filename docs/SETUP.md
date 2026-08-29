@@ -174,7 +174,7 @@ TELEGRAM_WEBHOOK_SECRET=<random base64url secret>
 APP_URL=https://<your deployed site>
 ```
 
-You can generate a webhook secret with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`. Restart or redeploy after changing environment variables. In Settings, a signed-in user selects **Connect Telegram**, opens the one-time link, and presses **Start** in the bot’s private chat. Replylane registers its Telegram webhook automatically. Test the connection and a newly received reply before inviting other users. Users can disconnect in Replylane or send `/stop` to the bot. Never expose the bot token in browser variables or client code.
+You can generate a webhook secret with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`. Restart or redeploy after changing environment variables. In local development (`APP_URL=http://localhost:3000`), Replylane uses authenticated long polling while the Settings page is waiting for the user to press **Start** in the bot’s private chat. It removes any webhook first, since Telegram does not allow polling and webhooks at the same time. In production, use the deployed HTTPS `APP_URL`; Replylane registers its webhook when a signed-in user starts linking Telegram. A single bot token can have only one active delivery method, so local testing with the production token will temporarily remove the production webhook; production reconnects it the next time a user starts linking. Test the connection and a newly received reply before inviting other users. Users can disconnect in Replylane or send `/stop` to the bot. Never expose the bot token in browser variables or client code.
 
 ## Before accepting public registrations
 
