@@ -1109,8 +1109,8 @@ html[data-theme="dark"] .hero h1 > span {
   color: #8d76ae;
 }
 .status-badge.offer {
-  background: #faf0d9;
-  color: #8e6928;
+  background: #e7f2eb;
+  color: #34734f;
 }
 .status-badge.rejected {
   background: #f4ece8;
@@ -1130,8 +1130,8 @@ html[data-theme="dark"] .status-badge.next_step {
   color: #d1c2f1;
 }
 html[data-theme="dark"] .status-badge.offer {
-  background: #423924;
-  color: #f0cf8f;
+  background: #23392e;
+  color: #a7d4b7;
 }
 html[data-theme="dark"] .status-badge.rejected {
   background: #433438;
@@ -5220,7 +5220,8 @@ html[data-theme="dark"] .attention-icon {
   --lane-accent: #a78bfa;
 }
 .lane-offer {
-  --lane-accent: #60a5fa;
+  --lane-accent: #438d63;
+  background: color-mix(in srgb, var(--lane-accent) 9%, var(--surface-soft));
 }
 .lane-rejected {
   --lane-accent: #f87171;
@@ -5274,7 +5275,7 @@ html[data-theme="dark"] .attention-icon {
   --card-accent: #a78bfa;
 }
 .compact-card.card-offer {
-  --card-accent: #60a5fa;
+  --card-accent: #438d63;
 }
 .compact-card.card-rejected {
   --card-accent: #f87171;
