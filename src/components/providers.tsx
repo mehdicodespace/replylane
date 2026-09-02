@@ -3,14 +3,31 @@ import { useEffect, useMemo, useState, createContext, useContext } from "react";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { onAuthStateChanged, type User } from "firebase/auth";
+import { useQuery } from "@tanstack/react-query";
 import { clientAuth, firebaseConfigured } from "@/lib/firebase-client";
 import { useUI, useDemo } from "@/lib/store";
+import { api } from "@/lib/firebase-client";
 
 const AuthContext = createContext<{ user: User | null; loading: boolean }>({
   user: null,
   loading: true,
 });
 export const useAuth = () => useContext(AuthContext);
+
+function LocalTelegramWorker({ user }: { user: User | null }) {
+  useQuery({
+    queryKey: ["telegram-local-worker", user?.uid],
+    enabled: Boolean(user),
+    queryFn: async () => {
+      const status = await api<{ configured: boolean; localPolling: boolean }>("/api/telegram");
+      if (status.configured && status.localPolling)
+        await api("/api/telegram/poll", { method: "POST" });
+      return status;
+    },
+    refetchInterval: (query) => (query.state.data?.localPolling ? 2500 : false),
+  });
+  return null;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -73,7 +90,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
-        <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>
+        <AuthContext.Provider value={{ user, loading }}>
+          <LocalTelegramWorker user={user} />
+          {children}
+        </AuthContext.Provider>
       </ThemeProvider>
     </QueryClientProvider>
   );

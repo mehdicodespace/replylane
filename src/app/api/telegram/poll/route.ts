@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticate, responseError } from "@/lib/server/core";
-import { pollTelegramUpdates } from "@/lib/server/telegram";
+import { drainTelegramOutbox, pollTelegramUpdates } from "@/lib/server/telegram";
 
 export const runtime = "nodejs";
 
@@ -8,9 +8,13 @@ export async function POST(request: Request) {
   try {
     await authenticate(request);
     const result = await pollTelegramUpdates();
-    return NextResponse.json(result, {
-      headers: { "Cache-Control": "no-store" },
-    });
+    const delivery = await drainTelegramOutbox(10);
+    return NextResponse.json(
+      { ...result, sent: delivery.sent },
+      {
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
   } catch (error) {
     return responseError(error);
   }
