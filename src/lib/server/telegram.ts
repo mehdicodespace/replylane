@@ -34,9 +34,34 @@ export function telegramLocalPollingEnabled() {
   }
 }
 
-export async function createTelegramLink(uid: string) {
-  const { username, secret } = assertConfigured();
+export async function ensureTelegramWebhook() {
+  const { secret } = assertConfigured();
   const url = appURL();
+  if (!url.startsWith("https://"))
+    throw new AppError(
+      "Telegram linking needs a public HTTPS app URL. Configure APP_URL for your deployed site.",
+      503,
+    );
+  const webhook = await fetch(telegramApi("setWebhook"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url: `${url}/api/telegram/webhook`,
+      secret_token: secret,
+      allowed_updates: ["message"],
+    }),
+    signal: AbortSignal.timeout(10000),
+  });
+  const result = (await webhook.json().catch(() => null)) as { ok?: boolean } | null;
+  if (!webhook.ok || !result?.ok)
+    throw new AppError(
+      "The Telegram bot couldn’t be prepared. Check its server configuration and try again.",
+      502,
+    );
+}
+
+export async function createTelegramLink(uid: string) {
+  const { username } = assertConfigured();
   if (telegramLocalPollingEnabled()) {
     // Telegram cannot reach localhost. Long polling is the development-only equivalent.
     const response = await fetch(telegramApi("deleteWebhook"), {
@@ -49,28 +74,7 @@ export async function createTelegramLink(uid: string) {
     if (!response.ok || !result?.ok)
       throw new AppError("The Telegram bot couldn’t be prepared for local testing.", 502);
   } else {
-    if (!url.startsWith("https://"))
-      throw new AppError(
-        "Telegram linking needs a public HTTPS app URL. Configure APP_URL for your deployed site.",
-        503,
-      );
-
-    const webhook = await fetch(telegramApi("setWebhook"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        url: `${url}/api/telegram/webhook`,
-        secret_token: secret,
-        allowed_updates: ["message"],
-      }),
-      signal: AbortSignal.timeout(10000),
-    });
-    const webhookResult = (await webhook.json().catch(() => null)) as { ok?: boolean } | null;
-    if (!webhook.ok || !webhookResult?.ok)
-      throw new AppError(
-        "The Telegram bot couldn’t be prepared. Check its server configuration and try again.",
-        502,
-      );
+    await ensureTelegramWebhook();
   }
 
   const token = randomBytes(32).toString("base64url");
