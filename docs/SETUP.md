@@ -176,6 +176,8 @@ APP_URL=https://<your deployed site>
 
 You can generate a webhook secret with `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`. Restart or redeploy after changing environment variables. In local development (`APP_URL=http://localhost:3000`), Replylane uses authenticated long polling while a signed-in user has the app open. Press **Start** in the bot’s private chat to finish linking. Local polling also drains queued Telegram notices, replacing the scheduled delivery worker used in production. It removes any webhook first, since Telegram does not allow polling and webhooks at the same time. In production, use the deployed HTTPS `APP_URL`; Replylane registers its webhook when a user starts linking and restores it when an existing Telegram connection opens Settings. A single bot token can have only one active delivery method, so local testing with the production token will temporarily remove the production webhook. Test the connection and a newly received reply before inviting other users. Users can disconnect in Replylane or send `/stop` to the bot. Never expose the bot token in browser variables or client code.
 
+For the bot profile photo, upload [`public/replylanebot-avatar.png`](../public/replylanebot-avatar.png) through BotFather’s `/setuserpic` command.
+
 ## Before accepting public registrations
 
 Supply the operator’s identity and privacy contact in `/privacy` and `/terms`, establish retention and account-deletion handling with your infrastructure providers, complete applicable OAuth verification, and review the app with representative real-world fixtures before opening registration.

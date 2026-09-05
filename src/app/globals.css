@@ -3045,11 +3045,11 @@ html[data-theme="dark"] .attention-icon {
   padding: 26px;
 }
 .settings-card h3 {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 550;
 }
 .settings-card > p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   line-height: 1.8;
   margin-top: 11px;
@@ -3088,7 +3088,7 @@ html[data-theme="dark"] .attention-icon {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   line-height: 1.8;
   margin: 22px 0;
@@ -3098,7 +3098,7 @@ html[data-theme="dark"] .attention-icon {
 }
 .settings-card .MuiButton-root,
 .settings-card > .text-link {
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 15px;
 }
 .settings-card > .settings-info:last-child {
@@ -4808,13 +4808,13 @@ html[data-theme="dark"] .attention-icon {
     padding: 23px;
   }
   .settings-card > p {
-    font-size: 12px;
+    font-size: 13px;
   }
   .settings-info {
-    font-size: 11px;
+    font-size: 12px;
   }
   .settings-card .MuiButton-root {
-    font-size: 11px;
+    font-size: 12px;
   }
   .settings-page .page-title-row h1 {
     font-size: 32px;
@@ -5133,7 +5133,9 @@ html[data-theme="dark"] .attention-icon {
 }
 .compact-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  position: relative;
   min-height: 78px;
   padding: 10px 8px 10px 12px;
   border: 1px solid var(--border);
@@ -5144,8 +5146,9 @@ html[data-theme="dark"] .attention-icon {
     transform 140ms ease;
 }
 .compact-card:hover {
-  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
   transform: translateY(-1px);
+  border-color: var(--border);
+  box-shadow: 0 5px 14px #0000001c;
 }
 .compact-card-open {
   display: flex;
@@ -5194,6 +5197,48 @@ html[data-theme="dark"] .attention-icon {
 .compact-card .star-button {
   flex-shrink: 0;
   align-self: flex-start;
+}
+.compact-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.compact-card-actions .icon-button {
+  width: 31px;
+  height: 31px;
+}
+.card-trash-button:hover,
+.detail-trash-button:hover {
+  color: #bd5454;
+  background: color-mix(in srgb, #bd5454 12%, var(--surface));
+}
+.card-trash-confirm {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+}
+.card-trash-confirm > span {
+  flex: 1;
+  color: var(--ink);
+  font-weight: 600;
+}
+.card-trash-confirm button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.card-trash-confirm .card-trash-confirm-action {
+  border-color: color-mix(in srgb, #bd5454 30%, var(--border));
+  color: #bd5454;
+  font-weight: 650;
 }
 
 /* Keep long application lanes contained while preserving a distinct status accent. */
@@ -5290,13 +5335,46 @@ html[data-theme="dark"] .attention-icon {
   background: color-mix(in srgb, var(--card-accent) 18%, var(--surface));
   color: var(--card-accent);
 }
+.detail-action-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -12px 0 20px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, #bd5454 28%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, #bd5454 8%, var(--surface));
+}
+.detail-action-confirm > span {
+  flex: 1 1 150px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.detail-action-confirm button {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.detail-action-confirm button:first-of-type {
+  border-color: color-mix(in srgb, #bd5454 35%, var(--border));
+  color: #bd5454;
+  font-weight: 650;
+}
 .telegram-settings-actions {
   display: grid;
   justify-items: start;
-  gap: 10px;
+  gap: 13px;
+  margin-top: 18px;
 }
 .telegram-settings-actions .settings-info {
   margin: 4px 0;
+}
+.telegram-settings-actions .MuiButton-root {
+  margin-top: 0;
 }
 .telegram-connected {
   color: var(--ink);
@@ -5309,11 +5387,89 @@ html[data-theme="dark"] .attention-icon {
   background: #34d399;
   box-shadow: 0 0 0 3px color-mix(in srgb, #34d399 16%, transparent);
 }
-.telegram-link-prompt a {
-  display: inline-block;
-  margin-top: 8px;
+.telegram-how-to,
+.telegram-link-prompt {
+  width: 100%;
+  max-width: 520px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+.telegram-how-to {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+}
+.telegram-how-to > p,
+.telegram-link-copy p,
+.telegram-link-expiry {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.telegram-how-to b,
+.telegram-link-copy b {
+  color: var(--ink);
+  font-weight: 650;
+}
+.telegram-step-number {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--accent);
   color: var(--primary);
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
+}
+.telegram-link-prompt {
+  display: grid;
+  gap: 14px;
+  padding: 17px;
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+}
+.telegram-link-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.telegram-link-copy strong {
+  display: block;
+  margin: 2px 0 4px;
+  color: var(--ink);
+  font-size: 14px;
+}
+.telegram-open-link {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 11px 15px;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-decoration: none;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+.telegram-open-link:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+.telegram-link-expiry {
+  font-size: 11px;
 }
 [dir="rtl"],
 [lang="fa"] {
@@ -5321,24 +5477,6 @@ html[data-theme="dark"] .attention-icon {
 }
 .detail-company div > span {
   display: block;
-}
-.email-view-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 16px 0 10px;
-}
-.email-view-actions button {
-  padding: 7px 11px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 12px;
-}
-.email-view-actions button[aria-pressed="true"] {
-  background: var(--sage);
-  border-color: var(--primary);
-  color: var(--primary);
 }
 .email-frame {
   width: 100%;

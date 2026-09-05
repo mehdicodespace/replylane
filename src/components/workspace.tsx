@@ -12,6 +12,7 @@ import {
   Search,
   SlidersHorizontal,
   Star,
+  Trash2,
   Link2,
   Settings as SettingsIcon,
   Archive,
@@ -822,6 +823,17 @@ export function Workspace({
                                   key={a.id}
                                   a={a}
                                   onOpen={() => setSelected(a.id)}
+                                  onTrash={
+                                    tab === "trash"
+                                      ? undefined
+                                      : () =>
+                                          patch(a.id, { trashed: true, archived: false }).catch(
+                                            (error) => {
+                                              setError(error.message);
+                                              throw error;
+                                            },
+                                          )
+                                  }
                                   onStar={() =>
                                     void patch(a.id, { starred: !a.starred }).catch((e) =>
                                       setError(e.message),
@@ -942,11 +954,14 @@ function ApplicationCard({
   a,
   onOpen,
   onStar,
+  onTrash,
 }: {
   a: Application;
   onOpen: () => void;
   onStar: () => void;
+  onTrash?: () => Promise<void>;
 }) {
+  const [confirmTrash, setConfirmTrash] = useState(false);
   return (
     <article className={`application-card compact-card card-${a.status}`}>
       <button
@@ -965,13 +980,45 @@ function ApplicationCard({
           </time>
         </span>
       </button>
-      <button
-        className={`icon-button star-button ${a.starred ? "is-starred" : ""}`}
-        aria-label={`${a.starred ? "Unsave" : "Save"} ${a.company}`}
-        onClick={onStar}
-      >
-        <Star size={14} fill={a.starred ? "currentColor" : "none"} />
-      </button>
+      <div className="compact-card-actions">
+        <button
+          className={`icon-button star-button ${a.starred ? "is-starred" : ""}`}
+          aria-label={`${a.starred ? "Unsave" : "Save"} ${a.company}`}
+          onClick={onStar}
+        >
+          <Star size={14} fill={a.starred ? "currentColor" : "none"} />
+        </button>
+        {onTrash && (
+          <button
+            className="icon-button card-trash-button"
+            aria-label={`Move ${a.company} to Trash`}
+            aria-expanded={confirmTrash}
+            title="Move to Trash"
+            onClick={() => setConfirmTrash((value) => !value)}
+          >
+            <Trash2 size={15} />
+          </button>
+        )}
+      </div>
+      {confirmTrash && onTrash && (
+        <div className="card-trash-confirm" role="group" aria-label={`Move ${a.company} to Trash?`}>
+          <span>Move to Trash?</span>
+          <button
+            className="card-trash-confirm-action"
+            onClick={async () => {
+              try {
+                await onTrash();
+              } catch {
+                // The workspace displays the request error.
+              }
+              setConfirmTrash(false);
+            }}
+          >
+            Move
+          </button>
+          <button onClick={() => setConfirmTrash(false)}>Cancel</button>
+        </div>
+      )}
     </article>
   );
 }

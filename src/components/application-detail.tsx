@@ -11,6 +11,7 @@ import {
   Mail,
   ArrowUpRight,
   Archive,
+  ArchiveRestore,
   Trash2,
   Check,
   Clock3,
@@ -76,8 +77,7 @@ function Detail({
   const [deadline, setDeadline] = useState(a.deadline || "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [emailView, setEmailView] = useState("formatted");
-  const [showImages, setShowImages] = useState(true);
+  const [confirmTrash, setConfirmTrash] = useState(false);
   const message = useQuery({
     queryKey: ["message", a.id, a.receivedAt],
     queryFn: () => api<{ html: string | null; text: string }>(`/api/applications/${a.id}/message`),
@@ -117,6 +117,44 @@ function Detail({
       <div className="detail-top">
         <span>APPLICATION DETAILS</span>
         <div>
+          {!a.trashed && (
+            <button
+              className="icon-button"
+              aria-label={a.archived ? "Restore application" : "Archive application"}
+              title={a.archived ? "Restore application" : "Archive application"}
+              disabled={busy}
+              onClick={async () => {
+                try {
+                  await onPatch(a.id, { archived: !a.archived });
+                  onClose();
+                } catch (e) {
+                  setError((e as Error).message);
+                }
+              }}
+            >
+              {a.archived ? <ArchiveRestore size={17} /> : <Archive size={17} />}
+            </button>
+          )}
+          <button
+            className={`icon-button ${a.trashed ? "" : "detail-trash-button"}`}
+            aria-label={a.trashed ? "Restore from Trash" : "Move to Trash"}
+            title={a.trashed ? "Restore from Trash" : "Move to Trash"}
+            disabled={busy}
+            onClick={async () => {
+              if (!a.trashed) {
+                setConfirmTrash((value) => !value);
+                return;
+              }
+              try {
+                await onPatch(a.id, { trashed: false });
+                onClose();
+              } catch (e) {
+                setError((e as Error).message);
+              }
+            }}
+          >
+            {a.trashed ? <ArchiveRestore size={17} /> : <Trash2 size={17} />}
+          </button>
           <button
             className={`icon-button ${a.starred ? "is-starred" : ""}`}
             aria-label={a.starred ? "Unsave application" : "Save application"}
@@ -130,6 +168,26 @@ function Detail({
           </button>
         </div>
       </div>
+      {confirmTrash && !a.trashed && (
+        <div className="detail-action-confirm" role="group" aria-label="Confirm move to Trash">
+          <span>Move this reply to Trash?</span>
+          <button
+            disabled={busy}
+            onClick={async () => {
+              try {
+                await onPatch(a.id, { trashed: true, archived: false });
+                onClose();
+              } catch (e) {
+                setError((e as Error).message);
+                setConfirmTrash(false);
+              }
+            }}
+          >
+            Move to Trash
+          </button>
+          <button onClick={() => setConfirmTrash(false)}>Cancel</button>
+        </div>
+      )}
       <div className="detail-company">
         <span className={`company-avatar ${a.color || "blue"}`}>{a.company.slice(0, 1)}</span>
         <div>
@@ -255,31 +313,13 @@ function Detail({
             Loading original email…
           </p>
         )}
-        {message.data?.html && (
-          <div className="email-view-actions">
-            <button
-              aria-pressed={emailView === "formatted"}
-              onClick={() => setEmailView("formatted")}
-            >
-              Formatted
-            </button>
-            <button aria-pressed={emailView === "text"} onClick={() => setEmailView("text")}>
-              Text
-            </button>
-            {emailView === "formatted" && (
-              <button onClick={() => setShowImages(!showImages)}>
-                {showImages ? "Hide images" : "Show images"}
-              </button>
-            )}
-          </div>
-        )}
-        {message.data?.html && emailView === "formatted" ? (
+        {message.data?.html ? (
           <iframe
             className="email-frame"
             title={`Original email: ${a.subject}`}
             sandbox="allow-popups allow-popups-to-escape-sandbox"
             referrerPolicy="no-referrer"
-            srcDoc={emailDocument(message.data.html, direction, showImages)}
+            srcDoc={emailDocument(message.data.html, direction, true)}
           />
         ) : (
           <blockquote dir={direction}>{originalText}</blockquote>
@@ -328,49 +368,6 @@ function Detail({
           ))
         )}
       </section>
-      {!a.trashed && (
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<Archive size={16} />}
-          disabled={busy}
-          onClick={async () => {
-            try {
-              await onPatch(a.id, { archived: !a.archived });
-              onClose();
-            } catch (e) {
-              setError((e as Error).message);
-            }
-          }}
-        >
-          {a.archived ? "Restore to applications" : "Archive in Replylane"}
-        </Button>
-      )}
-      <Button
-        fullWidth
-        variant="outlined"
-        color={a.trashed ? "primary" : "error"}
-        startIcon={<Trash2 size={16} />}
-        disabled={busy}
-        onClick={async () => {
-          try {
-            await onPatch(
-              a.id,
-              a.trashed ? { trashed: false } : { trashed: true, archived: false },
-            );
-            onClose();
-          } catch (e) {
-            setError((e as Error).message);
-          }
-        }}
-      >
-        {a.trashed ? "Restore from Trash" : "Move to Trash"}
-      </Button>
-      <p className="muted small detail-bottom-note">
-        {a.trashed
-          ? "Restore this reply whenever you want it back in your applications."
-          : "Archive or trash only changes your Replylane workspace."}
-      </p>
     </div>
   );
 }

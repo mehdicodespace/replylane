@@ -327,31 +327,51 @@ export function Settings({
             </div>
           ) : (
             <div className="telegram-settings-actions">
-              <div className="settings-info">
-                <Send size={17} />
-                <span>
-                  We’ll send the company, result category, and reply summary. Start a private chat
-                  with the bot to finish linking.
-                </span>
-              </div>
-              <Button
-                variant="outlined"
-                startIcon={<Send size={15} />}
-                disabled={connectTelegram.isPending}
-                onClick={() => connectTelegram.mutate()}
-              >
-                {connectTelegram.isPending ? "Preparing Telegram…" : "Connect Telegram"}
-              </Button>
+              {telegramLink ? (
+                <div className="telegram-link-prompt">
+                  <div className="telegram-link-copy">
+                    <span className="telegram-step-number">2</span>
+                    <div>
+                      <strong>Finish in Telegram</strong>
+                      <p>
+                        Open the private bot link below, then tap <b>Start</b>. Replylane will
+                        connect your account automatically.
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href={telegramLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="telegram-open-link"
+                  >
+                    <Send size={16} />
+                    Open Telegram &amp; press Start
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                  <p className="telegram-link-expiry">This one-time link expires in 10 minutes.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="telegram-how-to">
+                    <span className="telegram-step-number">1</span>
+                    <p>
+                      Create a private connection link. Telegram will open from that link and
+                      connect your account when you press <b>Start</b>.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Send size={15} />}
+                    disabled={connectTelegram.isPending}
+                    onClick={() => connectTelegram.mutate()}
+                  >
+                    {connectTelegram.isPending ? "Creating your link…" : "Create Telegram link"}
+                  </Button>
+                </>
+              )}
               {connectTelegram.isError && (
                 <Alert severity="error">{(connectTelegram.error as Error).message}</Alert>
-              )}
-              {telegramLink && (
-                <Alert severity="info" className="telegram-link-prompt">
-                  <span>Open Telegram and press Start to connect.</span>
-                  <a href={telegramLink} target="_blank" rel="noreferrer">
-                    Open Telegram ↗
-                  </a>
-                </Alert>
               )}
             </div>
           )}
