@@ -31,12 +31,14 @@ export function ApplicationDetail({
   application,
   onClose,
   onPatch,
+  onPermanentDelete,
   demo,
   busy,
 }: {
   application: Application | null;
   onClose: () => void;
   onPatch: (id: string, p: ApplicationPatch) => Promise<void>;
+  onPermanentDelete: (id: string) => Promise<void>;
   demo: boolean;
   busy: boolean;
 }) {
@@ -53,6 +55,7 @@ export function ApplicationDetail({
           a={application}
           onClose={onClose}
           onPatch={onPatch}
+          onPermanentDelete={onPermanentDelete}
           demo={demo}
           busy={busy}
         />
@@ -64,12 +67,14 @@ function Detail({
   a,
   onClose,
   onPatch,
+  onPermanentDelete,
   demo,
   busy,
 }: {
   a: Application;
   onClose: () => void;
   onPatch: (id: string, p: ApplicationPatch) => Promise<void>;
+  onPermanentDelete: (id: string) => Promise<void>;
   demo: boolean;
   busy: boolean;
 }) {
@@ -78,6 +83,7 @@ function Detail({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [confirmTrash, setConfirmTrash] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const message = useQuery({
     queryKey: ["message", a.id, a.receivedAt],
     queryFn: () => api<{ html: string | null; text: string }>(`/api/applications/${a.id}/message`),
@@ -155,6 +161,17 @@ function Detail({
           >
             {a.trashed ? <ArchiveRestore size={17} /> : <Trash2 size={17} />}
           </button>
+          {a.trashed && (
+            <button
+              className="icon-button detail-trash-button"
+              aria-label="Permanently delete this reply"
+              title="Delete permanently"
+              disabled={busy}
+              onClick={() => setConfirmDelete((value) => !value)}
+            >
+              <Trash2 size={17} />
+            </button>
+          )}
           <button
             className={`icon-button ${a.starred ? "is-starred" : ""}`}
             aria-label={a.starred ? "Unsave application" : "Save application"}
@@ -186,6 +203,29 @@ function Detail({
             Move to Trash
           </button>
           <button onClick={() => setConfirmTrash(false)}>Cancel</button>
+        </div>
+      )}
+      {confirmDelete && a.trashed && (
+        <div className="detail-action-confirm" role="group" aria-label="Confirm permanent deletion">
+          <span>
+            Delete this reply and its saved history permanently? The original email stays in your
+            inbox.
+          </span>
+          <button
+            disabled={busy}
+            onClick={async () => {
+              try {
+                await onPermanentDelete(a.id);
+                onClose();
+              } catch (e) {
+                setError((e as Error).message);
+                setConfirmDelete(false);
+              }
+            }}
+          >
+            Delete permanently
+          </button>
+          <button onClick={() => setConfirmDelete(false)}>Cancel</button>
         </div>
       )}
       <div className="detail-company">

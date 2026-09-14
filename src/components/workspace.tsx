@@ -172,12 +172,20 @@ export function Workspace({
       api(`/api/applications/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workspace"] }),
   });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api(`/api/applications/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workspace"] }),
+  });
   async function patch(id: string, p: ApplicationPatch) {
     if (demo) {
       demoState.patch(id, p);
       return;
     }
     await mutation.mutateAsync({ id, patch: p });
+  }
+  async function permanentlyDelete(id: string) {
+    if (demo) return;
+    await deleteMutation.mutateAsync(id);
   }
   const filtered = useMemo(
     () =>
@@ -834,6 +842,15 @@ export function Workspace({
                                             },
                                           )
                                   }
+                                  onPermanentDelete={
+                                    tab === "trash"
+                                      ? () =>
+                                          permanentlyDelete(a.id).catch((requestError) => {
+                                            setError(requestError.message);
+                                            throw requestError;
+                                          })
+                                      : undefined
+                                  }
                                   onStar={() =>
                                     void patch(a.id, { starred: !a.starred }).catch((e) =>
                                       setError(e.message),
@@ -929,8 +946,9 @@ export function Workspace({
         application={applications.find((a) => a.id === selected) || null}
         onClose={() => setSelected(null)}
         onPatch={patch}
+        onPermanentDelete={permanentlyDelete}
         demo={demo}
-        busy={mutation.isPending}
+        busy={mutation.isPending || deleteMutation.isPending}
       />
       <Snackbar
         open={!!notice}
@@ -955,13 +973,16 @@ function ApplicationCard({
   onOpen,
   onStar,
   onTrash,
+  onPermanentDelete,
 }: {
   a: Application;
   onOpen: () => void;
   onStar: () => void;
   onTrash?: () => Promise<void>;
+  onPermanentDelete?: () => Promise<void>;
 }) {
   const [confirmTrash, setConfirmTrash] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   return (
     <article className={`application-card compact-card card-${a.status}`}>
       <button
@@ -988,13 +1009,19 @@ function ApplicationCard({
         >
           <Star size={14} fill={a.starred ? "currentColor" : "none"} />
         </button>
-        {onTrash && (
+        {(onTrash || onPermanentDelete) && (
           <button
             className="icon-button card-trash-button"
-            aria-label={`Move ${a.company} to Trash`}
-            aria-expanded={confirmTrash}
-            title="Move to Trash"
-            onClick={() => setConfirmTrash((value) => !value)}
+            aria-label={
+              onPermanentDelete ? `Permanently delete ${a.company}` : `Move ${a.company} to Trash`
+            }
+            aria-expanded={onPermanentDelete ? confirmDelete : confirmTrash}
+            title={onPermanentDelete ? "Delete permanently" : "Move to Trash"}
+            onClick={() =>
+              onPermanentDelete
+                ? setConfirmDelete((value) => !value)
+                : setConfirmTrash((value) => !value)
+            }
           >
             <Trash2 size={15} />
           </button>
@@ -1017,6 +1044,29 @@ function ApplicationCard({
             Move
           </button>
           <button onClick={() => setConfirmTrash(false)}>Cancel</button>
+        </div>
+      )}
+      {confirmDelete && onPermanentDelete && (
+        <div
+          className="card-trash-confirm"
+          role="group"
+          aria-label={`Permanently delete ${a.company}?`}
+        >
+          <span>Delete forever? This can’t be undone.</span>
+          <button
+            className="card-trash-confirm-action"
+            onClick={async () => {
+              try {
+                await onPermanentDelete();
+              } catch {
+                // The workspace displays the request error.
+              }
+              setConfirmDelete(false);
+            }}
+          >
+            Delete
+          </button>
+          <button onClick={() => setConfirmDelete(false)}>Cancel</button>
         </div>
       )}
     </article>
