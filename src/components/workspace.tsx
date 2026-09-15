@@ -991,7 +991,6 @@ function ApplicationCard({
         aria-label={`View details for ${a.company}`}
         title={`${a.company} · ${a.role}`}
       >
-        <span className="company-avatar blue">{a.company.slice(0, 1)}</span>
         <span className="compact-card-copy">
           <strong dir="auto">{a.company}</strong>
           <time dateTime={a.receivedAt}>
@@ -1052,7 +1051,7 @@ function ApplicationCard({
           role="group"
           aria-label={`Permanently delete ${a.company}?`}
         >
-          <span>Delete forever? This can’t be undone.</span>
+          <span>Delete permanently?</span>
           <button
             className="card-trash-confirm-action"
             onClick={async () => {
