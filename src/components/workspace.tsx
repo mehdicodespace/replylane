@@ -13,6 +13,8 @@ import {
   SlidersHorizontal,
   Star,
   Trash2,
+  ArchiveRestore,
+  LoaderCircle,
   Link2,
   Settings as SettingsIcon,
   Archive,
@@ -170,7 +172,38 @@ export function Workspace({
   const mutation = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: ApplicationPatch }) =>
       api(`/api/applications/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["workspace"] }),
+    onMutate: async ({ id, patch }) => {
+      if (typeof patch.starred !== "boolean") return;
+      const key = ["workspace", user?.uid] as const;
+      await queryClient.cancelQueries({ queryKey: key });
+      const current = queryClient.getQueryData<WorkspaceData>(key);
+      const previousStarred = current?.applications.find((item) => item.id === id)?.starred;
+      queryClient.setQueryData<WorkspaceData>(key, (data) =>
+        data
+          ? {
+              ...data,
+              applications: data.applications.map((item) =>
+                item.id === id ? { ...item, starred: patch.starred! } : item,
+              ),
+            }
+          : data,
+      );
+      return { id, previousStarred, key };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousStarred === undefined) return;
+      queryClient.setQueryData<WorkspaceData>(context.key, (data) =>
+        data
+          ? {
+              ...data,
+              applications: data.applications.map((item) =>
+                item.id === context.id ? { ...item, starred: context.previousStarred! } : item,
+              ),
+            }
+          : data,
+      );
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["workspace"] }),
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/api/applications/${id}`, { method: "DELETE" }),
@@ -851,6 +884,15 @@ export function Workspace({
                                           })
                                       : undefined
                                   }
+                                  onRestore={
+                                    tab === "trash"
+                                      ? () =>
+                                          patch(a.id, { trashed: false }).catch((requestError) => {
+                                            setError(requestError.message);
+                                            throw requestError;
+                                          })
+                                      : undefined
+                                  }
                                   onStar={() =>
                                     void patch(a.id, { starred: !a.starred }).catch((e) =>
                                       setError(e.message),
@@ -947,6 +989,7 @@ export function Workspace({
         onClose={() => setSelected(null)}
         onPatch={patch}
         onPermanentDelete={permanentlyDelete}
+        onRestore={(id) => patch(id, { trashed: false })}
         demo={demo}
         busy={mutation.isPending || deleteMutation.isPending}
       />
@@ -974,15 +1017,17 @@ function ApplicationCard({
   onStar,
   onTrash,
   onPermanentDelete,
+  onRestore,
 }: {
   a: Application;
   onOpen: () => void;
   onStar: () => void;
   onTrash?: () => Promise<void>;
   onPermanentDelete?: () => Promise<void>;
+  onRestore?: () => Promise<void>;
 }) {
-  const [confirmTrash, setConfirmTrash] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"move" | "delete" | null>(null);
+  const [workingAction, setWorkingAction] = useState<"move" | "restore" | "delete" | null>(null);
   return (
     <article className={`application-card compact-card card-${a.status}`}>
       <button
@@ -1004,48 +1049,91 @@ function ApplicationCard({
         <button
           className={`icon-button star-button ${a.starred ? "is-starred" : ""}`}
           aria-label={`${a.starred ? "Unsave" : "Save"} ${a.company}`}
+          disabled={!!workingAction}
           onClick={onStar}
         >
           <Star size={14} fill={a.starred ? "currentColor" : "none"} />
         </button>
+        {onRestore && (
+          <button
+            className="icon-button card-restore-button"
+            aria-label={`Restore ${a.company} from Trash`}
+            title="Restore from Trash"
+            disabled={!!workingAction}
+            onClick={async () => {
+              setWorkingAction("restore");
+              try {
+                await onRestore();
+              } catch {
+                // The workspace displays the request error.
+              } finally {
+                setWorkingAction(null);
+              }
+            }}
+          >
+            {workingAction === "restore" ? (
+              <LoaderCircle className="action-spinner" size={15} />
+            ) : (
+              <ArchiveRestore size={15} />
+            )}
+          </button>
+        )}
         {(onTrash || onPermanentDelete) && (
           <button
             className="icon-button card-trash-button"
             aria-label={
               onPermanentDelete ? `Permanently delete ${a.company}` : `Move ${a.company} to Trash`
             }
-            aria-expanded={onPermanentDelete ? confirmDelete : confirmTrash}
+            aria-expanded={!!confirmAction}
             title={onPermanentDelete ? "Delete permanently" : "Move to Trash"}
+            disabled={!!workingAction}
             onClick={() =>
               onPermanentDelete
-                ? setConfirmDelete((value) => !value)
-                : setConfirmTrash((value) => !value)
+                ? setConfirmAction((value) => (value === "delete" ? null : "delete"))
+                : setConfirmAction((value) => (value === "move" ? null : "move"))
             }
           >
-            <Trash2 size={15} />
+            {workingAction === "move" || workingAction === "delete" ? (
+              <LoaderCircle className="action-spinner" size={15} />
+            ) : (
+              <Trash2 size={15} />
+            )}
           </button>
         )}
       </div>
-      {confirmTrash && onTrash && (
+      {confirmAction === "move" && onTrash && (
         <div className="card-trash-confirm" role="group" aria-label={`Move ${a.company} to Trash?`}>
           <span>Move to Trash?</span>
           <button
             className="card-trash-confirm-action"
+            disabled={!!workingAction}
             onClick={async () => {
+              setWorkingAction("move");
               try {
                 await onTrash();
               } catch {
                 // The workspace displays the request error.
+                setWorkingAction(null);
+                return;
               }
-              setConfirmTrash(false);
+              setConfirmAction(null);
+              setWorkingAction(null);
             }}
           >
-            Move
+            {workingAction === "move" ? (
+              <>
+                <LoaderCircle className="action-spinner" size={12} /> Moving…
+              </>
+            ) : (
+              "Move"
+            )}
           </button>
-          <button onClick={() => setConfirmTrash(false)}>Cancel</button>
+          <button disabled={!!workingAction} onClick={() => setConfirmAction(null)}>
+            Cancel
+          </button>
         </div>
       )}
-      {confirmDelete && onPermanentDelete && (
+      {confirmAction === "delete" && onPermanentDelete && (
         <div
           className="card-trash-confirm"
           role="group"
@@ -1054,18 +1142,31 @@ function ApplicationCard({
           <span>Delete permanently?</span>
           <button
             className="card-trash-confirm-action"
+            disabled={!!workingAction}
             onClick={async () => {
+              setWorkingAction("delete");
               try {
                 await onPermanentDelete();
               } catch {
                 // The workspace displays the request error.
+                setWorkingAction(null);
+                return;
               }
-              setConfirmDelete(false);
+              setConfirmAction(null);
+              setWorkingAction(null);
             }}
           >
-            Delete
+            {workingAction === "delete" ? (
+              <>
+                <LoaderCircle className="action-spinner" size={12} /> Deleting…
+              </>
+            ) : (
+              "Delete"
+            )}
           </button>
-          <button onClick={() => setConfirmDelete(false)}>Cancel</button>
+          <button disabled={!!workingAction} onClick={() => setConfirmAction(null)}>
+            Cancel
+          </button>
         </div>
       )}
     </article>

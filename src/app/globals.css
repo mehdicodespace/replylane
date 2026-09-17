@@ -5213,6 +5213,14 @@ html[data-theme="dark"] .attention-icon {
   color: #bd5454;
   background: color-mix(in srgb, #bd5454 12%, var(--surface));
 }
+.card-restore-button:hover {
+  color: #a78bfa;
+  background: color-mix(in srgb, #a78bfa 12%, var(--surface));
+}
+.action-spinner {
+  flex-shrink: 0;
+  animation: spin 0.9s linear infinite;
+}
 .card-trash-confirm {
   position: absolute;
   inset: 0;

@@ -15,6 +15,7 @@ import {
   Trash2,
   Check,
   Clock3,
+  LoaderCircle,
 } from "lucide-react";
 import {
   type Application,
@@ -32,6 +33,7 @@ export function ApplicationDetail({
   onClose,
   onPatch,
   onPermanentDelete,
+  onRestore,
   demo,
   busy,
 }: {
@@ -39,6 +41,7 @@ export function ApplicationDetail({
   onClose: () => void;
   onPatch: (id: string, p: ApplicationPatch) => Promise<void>;
   onPermanentDelete: (id: string) => Promise<void>;
+  onRestore: (id: string) => Promise<void>;
   demo: boolean;
   busy: boolean;
 }) {
@@ -56,6 +59,7 @@ export function ApplicationDetail({
           onClose={onClose}
           onPatch={onPatch}
           onPermanentDelete={onPermanentDelete}
+          onRestore={onRestore}
           demo={demo}
           busy={busy}
         />
@@ -68,6 +72,7 @@ function Detail({
   onClose,
   onPatch,
   onPermanentDelete,
+  onRestore,
   demo,
   busy,
 }: {
@@ -75,6 +80,7 @@ function Detail({
   onClose: () => void;
   onPatch: (id: string, p: ApplicationPatch) => Promise<void>;
   onPermanentDelete: (id: string) => Promise<void>;
+  onRestore: (id: string) => Promise<void>;
   demo: boolean;
   busy: boolean;
 }) {
@@ -84,6 +90,7 @@ function Detail({
   const [error, setError] = useState("");
   const [confirmTrash, setConfirmTrash] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [workingAction, setWorkingAction] = useState<"move" | "restore" | "delete" | null>(null);
   const message = useQuery({
     queryKey: ["message", a.id, a.receivedAt],
     queryFn: () => api<{ html: string | null; text: string }>(`/api/applications/${a.id}/message`),
@@ -151,15 +158,23 @@ function Detail({
                 setConfirmTrash((value) => !value);
                 return;
               }
+              setWorkingAction("restore");
               try {
-                await onPatch(a.id, { trashed: false });
+                await onRestore(a.id);
                 onClose();
               } catch (e) {
                 setError((e as Error).message);
+                setWorkingAction(null);
               }
             }}
           >
-            {a.trashed ? <ArchiveRestore size={17} /> : <Trash2 size={17} />}
+            {workingAction === "restore" ? (
+              <LoaderCircle className="action-spinner" size={17} />
+            ) : a.trashed ? (
+              <ArchiveRestore size={17} />
+            ) : (
+              <Trash2 size={17} />
+            )}
           </button>
           {a.trashed && (
             <button
@@ -191,16 +206,24 @@ function Detail({
           <button
             disabled={busy}
             onClick={async () => {
+              setWorkingAction("move");
               try {
                 await onPatch(a.id, { trashed: true, archived: false });
                 onClose();
               } catch (e) {
                 setError((e as Error).message);
                 setConfirmTrash(false);
+                setWorkingAction(null);
               }
             }}
           >
-            Move to Trash
+            {workingAction === "move" ? (
+              <>
+                <LoaderCircle className="action-spinner" size={14} /> Moving…
+              </>
+            ) : (
+              "Move to Trash"
+            )}
           </button>
           <button onClick={() => setConfirmTrash(false)}>Cancel</button>
         </div>
@@ -214,16 +237,24 @@ function Detail({
           <button
             disabled={busy}
             onClick={async () => {
+              setWorkingAction("delete");
               try {
                 await onPermanentDelete(a.id);
                 onClose();
               } catch (e) {
                 setError((e as Error).message);
                 setConfirmDelete(false);
+                setWorkingAction(null);
               }
             }}
           >
-            Delete permanently
+            {workingAction === "delete" ? (
+              <>
+                <LoaderCircle className="action-spinner" size={14} /> Deleting…
+              </>
+            ) : (
+              "Delete permanently"
+            )}
           </button>
           <button onClick={() => setConfirmDelete(false)}>Cancel</button>
         </div>
