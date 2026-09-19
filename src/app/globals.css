@@ -5241,6 +5241,12 @@ html[data-theme="dark"] .attention-icon {
   line-height: 1.35;
 }
 .card-trash-confirm button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 64px;
+  height: 30px;
   white-space: nowrap;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -5249,6 +5255,7 @@ html[data-theme="dark"] .attention-icon {
   font-size: 10px;
 }
 .card-trash-confirm .card-trash-confirm-action {
+  min-width: 94px;
   border-color: color-mix(in srgb, #bd5454 30%, var(--border));
   color: #bd5454;
   font-weight: 650;
@@ -5366,6 +5373,11 @@ html[data-theme="dark"] .attention-icon {
   font-weight: 600;
 }
 .detail-action-confirm button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 72px;
   border: 1px solid var(--border);
   border-radius: 7px;
   padding: 8px 10px;
@@ -5373,6 +5385,7 @@ html[data-theme="dark"] .attention-icon {
   font-size: 11px;
 }
 .detail-action-confirm button:first-of-type {
+  min-width: 148px;
   border-color: color-mix(in srgb, #bd5454 35%, var(--border));
   color: #bd5454;
   font-weight: 650;
