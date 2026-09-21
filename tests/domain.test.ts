@@ -97,7 +97,9 @@ describe("search and export", () => {
   });
   it("separates archived items and saved items", () => {
     const changed = items.map((a, i) => ({ ...a, archived: i === 0 }));
-    expect(filterApplications(changed, filters)).toHaveLength(items.length - 1);
+    expect(filterApplications(changed, filters)).toHaveLength(
+      items.filter((a) => a.id !== items[0].id).length,
+    );
     expect(filterApplications(changed, { ...filters, tab: "archive" })).toHaveLength(1);
     expect(
       filterApplications(changed, { ...filters, tab: "starred" }).every(
@@ -110,7 +112,9 @@ describe("search and export", () => {
       ...application,
       trashed: index === 0,
     }));
-    expect(filterApplications(changed, filters)).toHaveLength(items.length - 1);
+    expect(filterApplications(changed, filters)).toHaveLength(
+      items.filter((a) => a.id !== items[0].id).length,
+    );
     expect(filterApplications(changed, { ...filters, tab: "trash" })).toHaveLength(1);
     expect(workspacePath("applications", "trash")).toBe("/app/trash");
   });
@@ -125,9 +129,22 @@ describe("search and export", () => {
     const attention = filterApplications(items, { ...filters, tab: "attention" });
     expect(
       attention.every(
-        (application) => application.status !== "received" && application.status !== "rejected",
+        (application) =>
+          application.status !== "received" &&
+          application.status !== "review" &&
+          application.status !== "rejected",
       ),
     ).toBe(true);
+  });
+  it("shows needs-review replies in the full overview and on their own route", () => {
+    const reviewItems = items.filter((application) => application.status === "review");
+    expect(reviewItems.length).toBeGreaterThan(0);
+    expect(
+      filterApplications(items, filters).some((application) => application.status === "review"),
+    ).toBe(true);
+    expect(filterApplications(items, { ...filters, tab: "review" })).toEqual(reviewItems);
+    expect(workspacePath("applications", "review")).toBe("/app/review");
+    expect(lanes.map((lane) => lane.label)).toEqual(["Moving forward", "Offers", "Rejected"]);
   });
   it("sorts oldest first and missing deadlines last", () => {
     const byDate = filterApplications(items, { ...filters, sort: "oldest" });

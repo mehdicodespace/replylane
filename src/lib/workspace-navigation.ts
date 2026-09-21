@@ -4,6 +4,7 @@ export const workspaceRoutes = [
   "inboxes",
   "archive",
   "attention",
+  "review",
   "rejected",
   "trash",
   "settings",
@@ -21,10 +22,12 @@ export function workspacePath(section: string, tab = "all", demo = false) {
             ? "archive"
             : tab === "attention"
               ? "attention"
-              : tab === "rejected"
-                ? "rejected"
-                : tab === "trash"
-                  ? "trash"
-                  : "applications";
+              : tab === "review"
+                ? "review"
+                : tab === "rejected"
+                  ? "rejected"
+                  : tab === "trash"
+                    ? "trash"
+                    : "applications";
   return `/${demo ? "demo" : "app"}/${route}`;
 }

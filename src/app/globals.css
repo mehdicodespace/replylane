@@ -1943,12 +1943,13 @@ html[data-theme="dark"] .attention-icon {
 .application-tabs {
   display: flex;
   gap: 23px;
+  align-self: stretch;
 }
 .application-tabs > button {
   position: relative;
   font-size: 10px;
   color: var(--muted);
-  padding: 0 0 16px;
+  padding: 0;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -1976,6 +1977,58 @@ html[data-theme="dark"] .attention-icon {
   font-size: 8px;
   background: var(--surface-soft);
   color: var(--muted);
+}
+.application-tabs > button[data-tab] {
+  --tab-color: #a78bfa;
+}
+.application-tabs > button[data-tab="all"] {
+  --tab-color: #67c7d4;
+}
+.application-tabs > button[data-tab="all"] {
+  order: 0;
+}
+.application-tabs > button[data-tab="attention"] {
+  order: 1;
+}
+.application-tabs > button[data-tab="review"] {
+  order: 2;
+}
+.application-tabs > button[data-tab="rejected"] {
+  order: 3;
+}
+.application-tabs > button[data-tab="trash"] {
+  order: 4;
+}
+.application-tabs > button[data-tab]:not([data-tab="trash"]) {
+  border-right: 1px solid var(--border);
+  padding-right: 16px;
+}
+.application-tabs > button[data-tab="review"] {
+  --tab-color: #fbbf24;
+}
+.application-tabs > button[data-tab="trash"] {
+  --tab-color: #e8879c;
+}
+.application-tabs > button[data-tab="rejected"] {
+  --tab-color: #f87171;
+}
+.application-tabs > button[data-tab]::before {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--tab-color);
+  content: "";
+}
+.application-tabs > button[data-tab].selected {
+  color: color-mix(in srgb, var(--tab-color) 72%, var(--ink));
+}
+.application-tabs > button[data-tab].selected::after {
+  background: var(--tab-color);
+}
+.application-tabs > button[data-tab] > span {
+  background: color-mix(in srgb, var(--tab-color) 12%, var(--surface-soft));
+  color: color-mix(in srgb, var(--tab-color) 78%, var(--ink));
 }
 .view-controls {
   display: flex;
@@ -4549,7 +4602,7 @@ html[data-theme="dark"] .attention-icon {
   .application-tabs > button {
     font-size: 9px;
     gap: 5px;
-    padding-bottom: 15px;
+    padding: 0;
   }
   .application-tabs > button > span {
     font-size: 7px;

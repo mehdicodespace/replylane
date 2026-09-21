@@ -42,6 +42,12 @@ export function assessmentStageStatus(text: string, status: Status, manualStatus
     return "received";
   return status;
 }
+export const reviewLane: { id: string; label: string; statuses: Status[]; caption: string } = {
+  id: "review",
+  label: "Needs review",
+  statuses: ["review"],
+  caption: "A little human judgment",
+};
 export const lanes: { id: string; label: string; statuses: Status[]; caption: string }[] = [
   {
     id: "progress",
@@ -56,7 +62,6 @@ export const lanes: { id: string; label: string; statuses: Status[]; caption: st
     statuses: ["rejected"],
     caption: "On to the right fit",
   },
-  { id: "review", label: "Needs review", statuses: ["review"], caption: "A little human judgment" },
 ];
 
 export interface Application {
@@ -176,11 +181,10 @@ export function filterApplications(items: Application[], f: Filters) {
       if (f.tab === "trash" ? !a.trashed : a.trashed) return false;
       if (f.tab === "archive" ? !a.archived : a.archived) return false;
       if (f.tab === "starred" && !a.starred) return false;
+      if (f.tab === "review" && a.status !== "review") return false;
+      if (!["all", "review", "trash"].includes(f.tab) && a.status === "review") return false;
       if (f.tab === "rejected" && a.status !== "rejected") return false;
-      if (
-        f.tab === "attention" &&
-        !["interview", "next_step", "offer", "review"].includes(a.status)
-      )
+      if (f.tab === "attention" && !["interview", "next_step", "offer"].includes(a.status))
         return false;
       if (f.status !== "all" && a.status !== f.status) return false;
       if (f.language !== "all" && a.language !== f.language) return false;
