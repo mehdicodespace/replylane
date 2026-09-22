@@ -15,6 +15,7 @@ import {
   CircleCheck,
   Menu,
   X,
+  Send,
 } from "lucide-react";
 import { Brand, ThemeToggle } from "@/components/brand";
 
@@ -318,6 +319,21 @@ export default function Landing() {
                 role.
               </p>
             </article>
+          </div>
+          <div className="telegram-promo">
+            <span className="telegram-promo-icon">
+              <Send size={19} />
+            </span>
+            <div>
+              <strong>Keep the important updates close.</strong>
+              <p>
+                Connect Telegram to get a private message when a new application reply is sorted,
+                with its category and a short summary.
+              </p>
+            </div>
+            <Link href="/sign-up" className="telegram-promo-link">
+              Get started <ArrowRight size={15} />
+            </Link>
           </div>
         </section>
         <section className="language-section" id="made-for-you">

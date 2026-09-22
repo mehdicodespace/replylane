@@ -13,6 +13,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   EmailAuthProvider,
+  linkWithCredential,
   reauthenticateWithCredential,
   sendPasswordResetEmail,
   signOut,
@@ -97,7 +98,7 @@ export function Settings({
   async function changePassword() {
     setPasswordError("");
     setPasswordNotice("");
-    if (!user?.email || !passwordAccount) return;
+    if (!user?.email) return;
     if (newPassword.length < 6) {
       setPasswordError("Choose a password with at least 6 characters.");
       return;
@@ -108,9 +109,14 @@ export function Settings({
     }
     setPasswordBusy(true);
     try {
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
-      await reauthenticateWithCredential(user, credential);
-      await updatePassword(user, newPassword);
+      if (passwordAccount) {
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+        await reauthenticateWithCredential(user, credential);
+        await updatePassword(user, newPassword);
+      } else {
+        const credential = EmailAuthProvider.credential(user.email, newPassword);
+        await linkWithCredential(user, credential);
+      }
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -120,11 +126,13 @@ export function Settings({
       setPasswordError(
         code === "auth/wrong-password" || code === "auth/invalid-credential"
           ? "The current password is incorrect."
-          : code === "auth/weak-password"
-            ? "Choose a stronger password with at least 6 characters."
-            : code === "auth/requires-recent-login"
-              ? "For security, sign out and back in, then try again."
-              : "Couldn’t update your password. Please try again.",
+          : code === "auth/email-already-in-use" || code === "auth/credential-already-in-use"
+            ? "This email already has a separate account with a password. Sign in to that account to manage its password."
+            : code === "auth/weak-password"
+              ? "Choose a stronger password with at least 6 characters."
+              : code === "auth/requires-recent-login"
+                ? "For security, sign out and back in, then try again."
+                : "Couldn’t update your password. Please try again.",
       );
     } finally {
       setPasswordBusy(false);
@@ -188,23 +196,27 @@ export function Settings({
             <Link href="/sign-up" className="text-link">
               Create your own workspace ↗
             </Link>
-          ) : passwordAccount ? (
+          ) : (
             <div className="password-change">
               <div className="settings-info">
                 <KeyRound size={17} />
                 <span>
-                  Change your password here with your current password. No email link needed.
+                  {passwordAccount
+                    ? "Change your password here with your current password."
+                    : "Add a password to this account so you can also sign in with email. Your existing sign-in method stays available."}
                 </span>
               </div>
-              <TextField
-                fullWidth
-                size="small"
-                type="password"
-                label="Current password"
-                autoComplete="current-password"
-                value={currentPassword}
-                onChange={(event) => setCurrentPassword(event.target.value)}
-              />
+              {passwordAccount && (
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="password"
+                  label="Current password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                />
+              )}
               <TextField
                 fullWidth
                 size="small"
@@ -228,29 +240,31 @@ export function Settings({
               <Button
                 variant="outlined"
                 onClick={() => void changePassword()}
-                disabled={passwordBusy || !currentPassword || !newPassword || !confirmPassword}
+                disabled={
+                  passwordBusy ||
+                  (Boolean(passwordAccount) && !currentPassword) ||
+                  !newPassword ||
+                  !confirmPassword
+                }
               >
-                {passwordBusy ? "Updating…" : "Update password"}
+                {passwordBusy ? "Updating…" : passwordAccount ? "Update password" : "Set password"}
               </Button>
-              <button
-                className="text-link password-reset-link"
-                onClick={async () => {
-                  try {
-                    if (!user?.email) throw new Error("No account email is available.");
-                    await sendPasswordResetEmail(clientAuth(), user.email);
-                    onNotice("Password reset link sent. Check your inbox.");
-                  } catch {
-                    onNotice("Couldn’t send the reset email. Please try again later.");
-                  }
-                }}
-              >
-                Forgot your current password? Send a reset link
-              </button>
-            </div>
-          ) : (
-            <div className="settings-info">
-              <KeyRound size={17} />
-              <span>Your password is managed by your sign-in provider.</span>
+              {passwordAccount && (
+                <button
+                  className="text-link password-reset-link"
+                  onClick={async () => {
+                    try {
+                      if (!user?.email) throw new Error("No account email is available.");
+                      await sendPasswordResetEmail(clientAuth(), user.email);
+                      onNotice("Password reset link sent. Check your inbox.");
+                    } catch {
+                      onNotice("Couldn’t send the reset email. Please try again later.");
+                    }
+                  }}
+                >
+                  Forgot your current password? Send a reset link
+                </button>
+              )}
             </div>
           )}
           <div className="settings-info">

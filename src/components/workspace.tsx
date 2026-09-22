@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   LogOut,
   CircleHelp,
+  Send,
 } from "lucide-react";
 import { Brand, ThemeToggle } from "./brand";
 import { useAuth } from "./providers";
@@ -55,6 +56,11 @@ interface WorkspaceData {
   connections: Connection[];
   usage: { requests: number; tokens: number; requestLimit?: number };
   hasMore?: boolean;
+}
+interface TelegramStatus {
+  configured: boolean;
+  connected: boolean;
+  botUsername?: string;
 }
 export function Workspace({
   demo = false,
@@ -133,6 +139,12 @@ export function Workspace({
     },
     refetchInterval: (query) =>
       query.state.data?.connections.some((c) => !c.importComplete || c.syncing) ? 5000 : 30000,
+  });
+  const telegramStatus = useQuery({
+    queryKey: ["telegram-status"],
+    queryFn: () => api<TelegramStatus>("/api/telegram"),
+    enabled: !demo && Boolean(user),
+    staleTime: 60_000,
   });
   useEffect(() => {
     if (demo || !user?.emailVerified) return;
@@ -590,6 +602,31 @@ export function Workspace({
                   <Link2 size={16} /> Connected inboxes
                 </button>
               </div>
+              {!demo && telegramStatus.data?.configured && (
+                <div
+                  className={`telegram-app-prompt${telegramStatus.data.connected ? " is-connected" : ""}`}
+                >
+                  <span className="telegram-app-icon">
+                    <Send size={16} />
+                  </span>
+                  <span className="telegram-app-copy">
+                    <strong>
+                      {telegramStatus.data.connected
+                        ? "Telegram alerts are on"
+                        : "Get new reply alerts on Telegram"}
+                    </strong>
+                    <small>
+                      {telegramStatus.data.connected
+                        ? `Connected to @${telegramStatus.data.botUsername}. New replies will send a short summary and category.`
+                        : "Get a message with the company, category, and a short summary when a new reply is processed."}
+                    </small>
+                  </span>
+                  <Link href="/app/settings" className="telegram-app-action">
+                    {telegramStatus.data.connected ? "Manage alerts" : "Connect Telegram"}
+                    <ArrowUpRight size={14} />
+                  </Link>
+                </div>
+              )}
               <section className="applications-section" aria-label="Application board">
                 <div className="applications-heading">
                   <div
@@ -938,9 +975,15 @@ export function Workspace({
                               ))}
                               {cards.length === 0 && (
                                 <div className="empty-lane">
-                                  No replies
-                                  <br />
-                                  {lane.id === "offer" ? "yet." : "yet."}
+                                  <Inbox size={17} aria-hidden="true" />
+                                  <strong>
+                                    {lane.id === "offer"
+                                      ? "No offers yet"
+                                      : lane.id === "review"
+                                        ? "Nothing needs review"
+                                        : "No replies here yet"}
+                                  </strong>
+                                  <small>New replies in this category will appear here.</small>
                                 </div>
                               )}
                             </div>
