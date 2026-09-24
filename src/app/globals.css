@@ -1942,14 +1942,14 @@ html[data-theme="dark"] .attention-icon {
 }
 .application-tabs {
   display: flex;
-  gap: 23px;
+  gap: 0;
   align-self: stretch;
 }
 .application-tabs > button {
   position: relative;
   font-size: 10px;
   color: var(--muted);
-  padding: 0;
+  padding: 0 16px;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -1983,6 +1983,7 @@ html[data-theme="dark"] .attention-icon {
 }
 .application-tabs > button[data-tab="all"] {
   --tab-color: #67c7d4;
+  padding-left: 10px;
 }
 .application-tabs > button[data-tab="all"] {
   order: 0;
@@ -2003,7 +2004,7 @@ html[data-theme="dark"] .attention-icon {
   > button[data-tab]:not([data-tab="trash"]):not([data-tab="starred"]):not([data-tab="archive"]) {
   border-right: 1px solid var(--border);
   padding-right: 16px;
-  padding-left: 9px;
+  padding-left: 16px;
 }
 .application-tabs > button[data-tab="review"] {
   --tab-color: #fbbf24;
@@ -3655,7 +3656,7 @@ html[data-theme="dark"] .attention-icon {
     width: 15px;
   }
   .application-tabs {
-    gap: 15px;
+    gap: 0;
   }
   .application-tabs > button {
     font-size: 9px;
@@ -4599,7 +4600,7 @@ html[data-theme="dark"] .attention-icon {
     width: 31px;
   }
   .application-tabs {
-    gap: 16px;
+    gap: 0;
   }
   .application-tabs > button {
     font-size: 9px;
@@ -5055,7 +5056,7 @@ html[data-theme="dark"] .attention-icon {
 }
 @media (max-width: 520px) {
   .application-tabs {
-    gap: 12px;
+    gap: 0;
   }
   .application-tabs > button {
     font-size: 10px;
@@ -5182,6 +5183,7 @@ html[data-theme="dark"] .attention-icon {
   gap: 8px;
 }
 .empty-lane {
+  flex-direction: column;
   min-height: 106px;
   font-size: 11px;
   border: 1px dashed var(--border);
@@ -5190,6 +5192,7 @@ html[data-theme="dark"] .attention-icon {
   padding: 16px 10px;
   gap: 5px;
   margin-top: 3px;
+  text-align: center;
 }
 .empty-lane svg {
   color: var(--muted);
