@@ -1982,7 +1982,7 @@ html[data-theme="dark"] .attention-icon {
   --tab-color: #a78bfa;
 }
 .application-tabs > button[data-tab="all"] {
-  --tab-color: #67c7d4;
+  --tab-color: #9ba8b8;
   padding-left: 10px;
 }
 .application-tabs > button[data-tab="all"] {
@@ -5363,7 +5363,7 @@ html[data-theme="dark"] .attention-icon {
 }
 .lane-offer {
   --lane-accent: #438d63;
-  background: color-mix(in srgb, var(--lane-accent) 9%, var(--surface-soft));
+  background: var(--surface-soft);
 }
 .lane-rejected {
   --lane-accent: #f87171;
