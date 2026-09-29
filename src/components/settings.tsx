@@ -9,6 +9,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -30,6 +32,8 @@ import {
   KeyRound,
   Send,
   Unplug,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useAuth } from "./providers";
 import { useUI, useDemo } from "@/lib/store";
@@ -93,11 +97,32 @@ export function Settings({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [passwordError, setPasswordError] = useState("");
-  const [passwordNotice, setPasswordNotice] = useState("");
+  const [passwordDialog, setPasswordDialog] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  });
   const passwordAccount = user?.providerData.some((provider) => provider.providerId === "password");
+  function openPasswordDialog() {
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordError("");
+    setPasswordVisible({ current: false, next: false, confirm: false });
+    setPasswordDialog(true);
+  }
+  function closePasswordDialog() {
+    if (passwordBusy) return;
+    setPasswordDialog(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setPasswordError("");
+    setPasswordVisible({ current: false, next: false, confirm: false });
+  }
   async function changePassword() {
     setPasswordError("");
-    setPasswordNotice("");
     if (!user?.email) return;
     if (newPassword.length < 6) {
       setPasswordError("Choose a password with at least 6 characters.");
@@ -120,7 +145,9 @@ export function Settings({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setPasswordNotice("Your password has been updated.");
+      setPasswordVisible({ current: false, next: false, confirm: false });
+      setPasswordDialog(false);
+      onNotice(passwordAccount ? "Your password has been updated." : "Password sign-in is ready.");
     } catch (cause) {
       const code = (cause as { code?: string }).code;
       setPasswordError(
@@ -197,57 +224,21 @@ export function Settings({
               Create your own workspace ↗
             </Link>
           ) : (
-            <div className="password-change">
+            <div className="password-settings-summary">
               <div className="settings-info">
                 <KeyRound size={17} />
                 <span>
                   {passwordAccount
-                    ? "Change your password here with your current password."
-                    : "Add a password to this account so you can also sign in with email. Your existing sign-in method stays available."}
+                    ? "You can sign in with your email and password."
+                    : "Add a password to sign in with email while keeping your existing sign-in method."}
                 </span>
               </div>
-              {passwordAccount && (
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="password"
-                  label="Current password"
-                  autoComplete="current-password"
-                  value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                />
-              )}
-              <TextField
-                fullWidth
-                size="small"
-                type="password"
-                label="New password"
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-              />
-              <TextField
-                fullWidth
-                size="small"
-                type="password"
-                label="Confirm new password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-              />
-              {passwordError && <Alert severity="error">{passwordError}</Alert>}
-              {passwordNotice && <Alert severity="success">{passwordNotice}</Alert>}
               <Button
                 variant="outlined"
-                onClick={() => void changePassword()}
-                disabled={
-                  passwordBusy ||
-                  (Boolean(passwordAccount) && !currentPassword) ||
-                  !newPassword ||
-                  !confirmPassword
-                }
+                startIcon={<KeyRound size={16} />}
+                onClick={openPasswordDialog}
               >
-                {passwordBusy ? "Updating…" : passwordAccount ? "Update password" : "Set password"}
+                {passwordAccount ? "Change password" : "Set a password"}
               </Button>
               {passwordAccount && (
                 <button
@@ -414,6 +405,120 @@ export function Settings({
           {demo ? "Reset demo" : "Delete my account"}
         </Button>
       </section>
+      <Dialog open={passwordDialog} onClose={closePasswordDialog} maxWidth="xs" fullWidth>
+        <DialogTitle>{passwordAccount ? "Change your password" : "Set a password"}</DialogTitle>
+        <DialogContent className="password-dialog-content">
+          <p>
+            {passwordAccount
+              ? "Enter your current password and choose a new one."
+              : "Choose a password for email sign-in. Your existing sign-in method will continue to work."}
+          </p>
+          {passwordAccount && (
+            <TextField
+              fullWidth
+              size="small"
+              type={passwordVisible.current ? "text" : "password"}
+              label="Current password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        edge="end"
+                        aria-label={
+                          passwordVisible.current
+                            ? "Hide current password"
+                            : "Show current password"
+                        }
+                        onClick={() =>
+                          setPasswordVisible((state) => ({ ...state, current: !state.current }))
+                        }
+                      >
+                        {passwordVisible.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          )}
+          <TextField
+            fullWidth
+            size="small"
+            type={passwordVisible.next ? "text" : "password"}
+            label="New password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(event) => setNewPassword(event.target.value)}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      aria-label={passwordVisible.next ? "Hide new password" : "Show new password"}
+                      onClick={() =>
+                        setPasswordVisible((state) => ({ ...state, next: !state.next }))
+                      }
+                    >
+                      {passwordVisible.next ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+          <TextField
+            fullWidth
+            size="small"
+            type={passwordVisible.confirm ? "text" : "password"}
+            label="Confirm new password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      aria-label={
+                        passwordVisible.confirm ? "Hide confirmation" : "Show confirmation"
+                      }
+                      onClick={() =>
+                        setPasswordVisible((state) => ({ ...state, confirm: !state.confirm }))
+                      }
+                    >
+                      {passwordVisible.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+          {passwordError && <Alert severity="error">{passwordError}</Alert>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closePasswordDialog} disabled={passwordBusy}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => void changePassword()}
+            disabled={
+              passwordBusy ||
+              (Boolean(passwordAccount) && !currentPassword) ||
+              !newPassword ||
+              !confirmPassword
+            }
+          >
+            {passwordBusy ? "Saving…" : passwordAccount ? "Update password" : "Set password"}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Dialog open={deleting} onClose={() => !busy && setDeleting(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Delete your workspace?</DialogTitle>
         <DialogContent>

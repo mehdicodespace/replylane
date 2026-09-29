@@ -5670,6 +5670,29 @@ html[data-theme="dark"] .attention-icon {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.password-settings-summary {
+  display: grid;
+  justify-items: start;
+}
+.password-settings-summary .settings-info {
+  margin: 22px 0 8px;
+}
+.password-settings-summary .MuiButton-root {
+  margin-top: 0;
+}
+.password-settings-summary .password-reset-link {
+  margin-top: 13px;
+}
+.password-dialog-content {
+  display: grid;
+  gap: 14px;
+}
+.password-dialog-content > p {
+  margin: 0 0 2px;
+}
+.password-dialog-content .MuiInputBase-root {
+  font-size: 13px;
+}
 .telegram-promo {
   display: flex;
   align-items: center;
