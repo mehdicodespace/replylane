@@ -2435,6 +2435,19 @@ html[data-theme="dark"] .attention-icon {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
+.workspace-load-error {
+  max-width: 720px;
+  margin: 28px auto;
+}
+.workspace-load-error p {
+  max-width: 520px;
+  margin: 0 auto 20px;
+}
+.telegram-load-error {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
 .inboxes-loading {
   min-height: 180px;
   display: flex;

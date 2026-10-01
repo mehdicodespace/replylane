@@ -146,6 +146,15 @@ export function Workspace({
     enabled: !demo && Boolean(user),
     staleTime: 60_000,
   });
+  async function retryWorkspace() {
+    try {
+      await user?.getIdToken(true);
+    } catch {
+      // The refetch below will show the actionable API error if the session is still invalid.
+    }
+    await queryClient.invalidateQueries({ queryKey: ["telegram-status"] });
+    await live.refetch();
+  }
   useEffect(() => {
     if (demo || !user?.emailVerified) return;
     let stopped = false;
@@ -523,7 +532,7 @@ export function Workspace({
               </button>
             </Alert>
           )}
-          {(error || live.error) && (
+          {(error || (user?.emailVerified && live.error)) && (
             <Alert
               severity="error"
               className="workspace-alert"
@@ -533,7 +542,7 @@ export function Workspace({
                   size="small"
                   onClick={() => {
                     setError("");
-                    void live.refetch();
+                    void retryWorkspace();
                   }}
                 >
                   Retry
@@ -578,6 +587,9 @@ export function Workspace({
               onNotice={setNotice}
               requests={live.data?.usage.requests || 0}
               requestLimit={live.data?.usage.requestLimit || 300}
+              onRetry={() => void retryWorkspace()}
+              emailVerified={Boolean(user?.emailVerified)}
+              loadErrorMessage={(live.error as Error)?.message}
             />
           ) : (
             <>
@@ -855,11 +867,53 @@ export function Workspace({
                     </button>
                   </div>
                 )}
-                {!demo && (live.isLoading || (live.isError && !live.data)) ? (
+                {!demo && !user?.emailVerified ? (
+                  <div className="empty-state workspace-load-error" role="status">
+                    <span><ShieldCheck size={29} strokeWidth={1.5} /></span>
+                    <h3>Verify your email to load applications.</h3>
+                    <p>Once verified, your replies and inbox data will appear here.</p>
+                    <button
+                      className="button button-dark"
+                      onClick={async () => {
+                        try {
+                          await user?.reload();
+                          await user?.getIdToken(true);
+                          window.location.reload();
+                        } catch {
+                          setNotice("Verification couldn’t be checked. Please try again.");
+                        }
+                      }}
+                    >
+                      I’ve verified my email
+                    </button>
+                  </div>
+                ) : !demo && live.isLoading ? (
                   <div className="board-skeleton">
                     {Array.from({ length: visibleLanes.length }, (_, i) => i).map((i) => (
                       <Skeleton key={i} variant="rounded" height={260} />
                     ))}
+                  </div>
+                ) : !demo && live.isError && !live.data ? (
+                  <div className="empty-state workspace-load-error" role="alert">
+                    <span><Inbox size={29} strokeWidth={1.5} /></span>
+                    <h3>Your applications couldn’t load.</h3>
+                    <p>{user?.emailVerified
+                      ? (live.error as Error)?.message || "The workspace request failed. Check your connection and try again."
+                      : "Verify your email address to load your workspace data."}</p>
+                    <button
+                      className="button button-dark"
+                      onClick={async () => {
+                        if (!user?.emailVerified) {
+                          await user?.reload();
+                          await user?.getIdToken(true);
+                          window.location.reload();
+                          return;
+                        }
+                        void retryWorkspace();
+                      }}
+                    >
+                      {user?.emailVerified ? "Try again" : "I’ve verified my email"}
+                    </button>
                   </div>
                 ) : (view === "board" ? boardApplications : filtered).length === 0 ? (
                   <div className="empty-state">

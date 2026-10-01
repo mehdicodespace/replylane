@@ -46,6 +46,9 @@ export function Settings({
   requestLimit,
   loading = false,
   loadError = false,
+  onRetry,
+  emailVerified = true,
+  loadErrorMessage,
 }: {
   demo: boolean;
   onNotice: (s: string) => void;
@@ -53,6 +56,9 @@ export function Settings({
   requestLimit: number;
   loading?: boolean;
   loadError?: boolean;
+  onRetry?: () => void;
+  emailVerified?: boolean;
+  loadErrorMessage?: string;
 }) {
   const { theme, setTheme } = useUI();
   const { user } = useAuth();
@@ -70,7 +76,7 @@ export function Settings({
       }
       return status;
     },
-    enabled: !demo && Boolean(user),
+    enabled: !demo && Boolean(user?.emailVerified),
     refetchInterval: telegramLink ? 2500 : false,
   });
   const connectTelegram = useMutation({
@@ -266,15 +272,17 @@ export function Settings({
         <section className="settings-card">
           <h3>Today's processing</h3>
           <p>
-            {loading
+            {!demo && !emailVerified
+              ? "Verify your email to load your account usage."
+              : loading
               ? "Loading your usage…"
               : loadError
-                ? "Your usage couldn’t load. Retry the workspace."
+                ? loadErrorMessage || "Your usage couldn’t load."
                 : demo
                   ? "Your demo uses sample replies."
                   : `${requests} processing batches used today.`}
           </p>
-          {!loadError && (
+          {!loadError && (demo || emailVerified) && (
             <div className="usage-rail">
               <span
                 style={{
@@ -282,6 +290,9 @@ export function Settings({
                 }}
               />
             </div>
+          )}
+          {loadError && emailVerified && onRetry && (
+            <Button variant="outlined" size="small" onClick={onRetry}>Retry</Button>
           )}
           <p className="small muted">
             Up to {requestLimit} processing batches are available per account each day. Each batch
@@ -295,14 +306,23 @@ export function Settings({
             <Link href="/sign-up" className="text-link">
               Create an account to connect Telegram ↗
             </Link>
+          ) : !emailVerified ? (
+            <div className="settings-info">
+              <ShieldCheck size={17} />
+              <span>Verify your email to connect Telegram notifications.</span>
+            </div>
           ) : telegram.isLoading ? (
             <p className="small muted" role="status">
               Checking your Telegram connection…
             </p>
           ) : telegram.isError ? (
-            <Alert severity="error">
-              Telegram connection status couldn’t load. Try refreshing.
-            </Alert>
+            <div className="telegram-load-error" role="alert">
+              <Alert severity="error">{(telegram.error as Error)?.message || "Telegram connection status couldn’t load."}</Alert>
+              <Button variant="outlined" size="small" onClick={async () => {
+                await user?.getIdToken(true);
+                await telegram.refetch();
+              }}>Retry</Button>
+            </div>
           ) : !telegram.data?.configured ? (
             <div className="settings-info">
               <Send size={17} />
