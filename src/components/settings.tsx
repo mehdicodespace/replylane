@@ -110,6 +110,7 @@ export function Settings({
     confirm: false,
   });
   const passwordAccount = user?.providerData.some((provider) => provider.providerId === "password");
+  const googleAccount = user?.providerData.some((provider) => provider.providerId === "google.com");
   function openPasswordDialog() {
     setCurrentPassword("");
     setNewPassword("");
@@ -144,6 +145,13 @@ export function Settings({
         const credential = EmailAuthProvider.credential(user.email, currentPassword);
         await reauthenticateWithCredential(user, credential);
         await updatePassword(user, newPassword);
+        sessionStorage.setItem(
+          "replylane-auth-notice",
+          "Your password was updated. Sign in again with your new password.",
+        );
+        await signOut(clientAuth()).catch(() => undefined);
+        window.location.assign("/sign-in");
+        return;
       } else {
         const credential = EmailAuthProvider.credential(user.email, newPassword);
         await linkWithCredential(user, credential);
@@ -153,7 +161,7 @@ export function Settings({
       setConfirmPassword("");
       setPasswordVisible({ current: false, next: false, confirm: false });
       setPasswordDialog(false);
-      onNotice(passwordAccount ? "Your password has been updated." : "Password sign-in is ready.");
+      onNotice("Password sign-in is ready.");
     } catch (cause) {
       const code = (cause as { code?: string }).code;
       setPasswordError(
@@ -234,9 +242,11 @@ export function Settings({
               <div className="settings-info">
                 <KeyRound size={17} />
                 <span>
-                  {passwordAccount
-                    ? "You can sign in with your email and password."
-                    : "Add a password to sign in with email while keeping your existing sign-in method."}
+                  {passwordAccount && googleAccount
+                    ? "Google and email sign-in are linked to this workspace."
+                    : passwordAccount
+                      ? "Sign-in method: email and password."
+                      : "Add email and password sign-in; Google will keep working."}
                 </span>
               </div>
               <Button
@@ -246,22 +256,6 @@ export function Settings({
               >
                 {passwordAccount ? "Change password" : "Set a password"}
               </Button>
-              {passwordAccount && (
-                <button
-                  className="text-link password-reset-link"
-                  onClick={async () => {
-                    try {
-                      if (!user?.email) throw new Error("No account email is available.");
-                      await sendPasswordResetEmail(clientAuth(), user.email);
-                      onNotice("Password reset link sent. Check your inbox.");
-                    } catch {
-                      onNotice("Couldn’t send the reset email. Please try again later.");
-                    }
-                  }}
-                >
-                  Forgot your current password? Send a reset link
-                </button>
-              )}
             </div>
           )}
           <div className="settings-info">
@@ -275,12 +269,12 @@ export function Settings({
             {!demo && !emailVerified
               ? "Verify your email to load your account usage."
               : loading
-              ? "Loading your usage…"
-              : loadError
-                ? loadErrorMessage || "Your usage couldn’t load."
-                : demo
-                  ? "Your demo uses sample replies."
-                  : `${requests} processing batches used today.`}
+                ? "Loading your usage…"
+                : loadError
+                  ? loadErrorMessage || "Your usage couldn’t load."
+                  : demo
+                    ? "Your demo uses sample replies."
+                    : `${requests} processing batches used today.`}
           </p>
           {!loadError && (demo || emailVerified) && (
             <div className="usage-rail">
@@ -292,7 +286,9 @@ export function Settings({
             </div>
           )}
           {loadError && emailVerified && onRetry && (
-            <Button variant="outlined" size="small" onClick={onRetry}>Retry</Button>
+            <Button variant="outlined" size="small" onClick={onRetry}>
+              Retry
+            </Button>
           )}
           <p className="small muted">
             Up to {requestLimit} processing batches are available per account each day. Each batch
@@ -317,11 +313,19 @@ export function Settings({
             </p>
           ) : telegram.isError ? (
             <div className="telegram-load-error" role="alert">
-              <Alert severity="error">{(telegram.error as Error)?.message || "Telegram connection status couldn’t load."}</Alert>
-              <Button variant="outlined" size="small" onClick={async () => {
-                await user?.getIdToken(true);
-                await telegram.refetch();
-              }}>Retry</Button>
+              <Alert severity="error">
+                {(telegram.error as Error)?.message || "Telegram connection status couldn’t load."}
+              </Alert>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={async () => {
+                  await user?.getIdToken(true);
+                  await telegram.refetch();
+                }}
+              >
+                Retry
+              </Button>
             </div>
           ) : !telegram.data?.configured ? (
             <div className="settings-info">
@@ -434,36 +438,53 @@ export function Settings({
               : "Choose a password for email sign-in. Your existing sign-in method will continue to work."}
           </p>
           {passwordAccount && (
-            <TextField
-              fullWidth
-              size="small"
-              type={passwordVisible.current ? "text" : "password"}
-              label="Current password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        edge="end"
-                        aria-label={
-                          passwordVisible.current
-                            ? "Hide current password"
-                            : "Show current password"
-                        }
-                        onClick={() =>
-                          setPasswordVisible((state) => ({ ...state, current: !state.current }))
-                        }
-                      >
-                        {passwordVisible.current ? <EyeOff size={18} /> : <Eye size={18} />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
+            <>
+              <TextField
+                fullWidth
+                size="small"
+                type={passwordVisible.current ? "text" : "password"}
+                label="Current password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          edge="end"
+                          aria-label={
+                            passwordVisible.current
+                              ? "Hide current password"
+                              : "Show current password"
+                          }
+                          onClick={() =>
+                            setPasswordVisible((state) => ({ ...state, current: !state.current }))
+                          }
+                        >
+                          {passwordVisible.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              <button
+                type="button"
+                className="text-link password-reset-link"
+                onClick={async () => {
+                  try {
+                    if (!user?.email) throw new Error("No account email is available.");
+                    await sendPasswordResetEmail(clientAuth(), user.email);
+                    onNotice("Password reset link sent. Check your inbox.");
+                  } catch {
+                    onNotice("Couldn’t send the reset email. Please try again later.");
+                  }
+                }}
+              >
+                Forgot your current password? Send a reset link
+              </button>
+            </>
           )}
           <TextField
             fullWidth

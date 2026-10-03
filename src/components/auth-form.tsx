@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,6 +32,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [notice, setNotice] = useState("");
+  useEffect(() => {
+    const message = sessionStorage.getItem("replylane-auth-notice");
+    if (message) {
+      setNotice(message);
+      sessionStorage.removeItem("replylane-auth-notice");
+    }
+  }, []);
   const {
     register,
     handleSubmit,
@@ -106,7 +114,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
     setError("");
     setBusy(true);
     try {
-      await signInWithPopup(clientAuth(), new GoogleAuthProvider());
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      await signInWithPopup(clientAuth(), provider);
       router.push("/app");
     } catch (e) {
       setError(friendly(e));
@@ -153,13 +163,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
           </p>
           {!firebaseConfigured && (
             <Alert severity="info" className="auth-alert">
-              Live accounts aren’t configured yet.{" "}
-              Account sign-in is unavailable until the deployment owner finishes setup.
+              Live accounts aren’t configured yet. Account sign-in is unavailable until the
+              deployment owner finishes setup.
             </Alert>
           )}
           {error && (
             <Alert severity="error" className="auth-alert">
               {error}
+            </Alert>
+          )}
+          {notice && mode === "sign-in" && (
+            <Alert severity="success" className="auth-alert">
+              {notice}
             </Alert>
           )}
           {success ? (

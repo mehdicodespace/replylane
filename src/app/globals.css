@@ -5688,13 +5688,13 @@ html[data-theme="dark"] .attention-icon {
   justify-items: start;
 }
 .password-settings-summary .settings-info {
-  margin: 22px 0 8px;
+  margin: 12px 0 10px;
 }
 .password-settings-summary .MuiButton-root {
   margin-top: 0;
 }
 .password-settings-summary .password-reset-link {
-  margin-top: 13px;
+  margin-top: 0;
 }
 .password-dialog-content {
   display: grid;
