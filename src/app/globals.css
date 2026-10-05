@@ -3117,6 +3117,18 @@ html[data-theme="dark"] .attention-icon {
   font-size: 17px;
   font-weight: 550;
 }
+.settings-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.settings-card-heading h3 {
+  margin: 0;
+}
+.settings-card-heading .MuiButton-root {
+  flex: 0 0 auto;
+}
 .settings-card > p {
   font-size: 13px;
   color: var(--muted);
@@ -5682,19 +5694,6 @@ html[data-theme="dark"] .attention-icon {
 .telegram-promo-link:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-.password-settings-summary {
-  display: grid;
-  justify-items: start;
-}
-.password-settings-summary .settings-info {
-  margin: 12px 0 10px;
-}
-.password-settings-summary .MuiButton-root {
-  margin-top: 0;
-}
-.password-settings-summary .password-reset-link {
-  margin-top: 0;
 }
 .password-dialog-content {
   display: grid;

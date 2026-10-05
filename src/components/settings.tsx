@@ -110,7 +110,6 @@ export function Settings({
     confirm: false,
   });
   const passwordAccount = user?.providerData.some((provider) => provider.providerId === "password");
-  const googleAccount = user?.providerData.some((provider) => provider.providerId === "google.com");
   function openPasswordDialog() {
     setCurrentPassword("");
     setNewPassword("");
@@ -221,7 +220,19 @@ export function Settings({
           </div>
         </section>
         <section className="settings-card">
-          <h3>Your account</h3>
+          <div className="settings-card-heading">
+            <h3>Your account</h3>
+            {!demo && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<KeyRound size={15} />}
+                onClick={openPasswordDialog}
+              >
+                {passwordAccount ? "Change password" : "Set password"}
+              </Button>
+            )}
+          </div>
           <p>{demo ? "You’re in the sample workspace." : user?.email}</p>
           <div className="settings-info">
             <Mail size={17} />
@@ -237,27 +248,7 @@ export function Settings({
             <Link href="/sign-up" className="text-link">
               Create your own workspace ↗
             </Link>
-          ) : (
-            <div className="password-settings-summary">
-              <div className="settings-info">
-                <KeyRound size={17} />
-                <span>
-                  {passwordAccount && googleAccount
-                    ? "Google and email sign-in are linked to this workspace."
-                    : passwordAccount
-                      ? "Sign-in method: email and password."
-                      : "Add email and password sign-in; Google will keep working."}
-                </span>
-              </div>
-              <Button
-                variant="outlined"
-                startIcon={<KeyRound size={16} />}
-                onClick={openPasswordDialog}
-              >
-                {passwordAccount ? "Change password" : "Set a password"}
-              </Button>
-            </div>
-          )}
+          ) : null}
           <div className="settings-info">
             <ShieldCheck size={17} />
             <Link href="/privacy">How your information is handled ↗</Link>
