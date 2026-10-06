@@ -18,6 +18,7 @@ import {
   Send,
 } from "lucide-react";
 import { Brand, ThemeToggle } from "@/components/brand";
+import { useAuth } from "@/components/providers";
 
 const faqs = [
   [
@@ -43,6 +44,9 @@ const faqs = [
 ];
 
 export default function Landing() {
+  const { user, loading: authLoading } = useAuth();
+  const workspaceHref = user ? "/app" : "/sign-up";
+  const accountInitial = (user?.displayName || user?.email || "M").slice(0, 1).toUpperCase();
   const [open, setOpen] = useState<number | null>(0);
   const [mobile, setMobile] = useState(false);
   const [preview, setPreview] = useState("en");
@@ -69,12 +73,23 @@ export default function Landing() {
         </nav>
         <div className="nav-actions">
           <ThemeToggle />
-          <Link className="nav-login" href="/sign-in">
-            Log in
-          </Link>
-          <Link className="button button-dark button-small" href="/sign-up">
-            Get started <ArrowUpRight size={16} />
-          </Link>
+          {!authLoading &&
+            (user ? (
+              <Link className="nav-account" href="/app">
+                <span className="nav-account-avatar">{accountInitial}</span>
+                <span>My workspace</span>
+                <ArrowUpRight size={15} />
+              </Link>
+            ) : (
+              <>
+                <Link className="nav-login" href="/sign-in">
+                  Log in
+                </Link>
+                <Link className="button button-dark button-small" href="/sign-up">
+                  Get started <ArrowUpRight size={16} />
+                </Link>
+              </>
+            ))}
           <button
             className="icon-button mobile-menu"
             aria-label="Toggle menu"
@@ -104,8 +119,8 @@ export default function Landing() {
               updates, and offers — thoughtfully organized with AI.
             </p>
             <div className="hero-actions">
-              <Link href="/sign-up" className="button button-dark">
-                Find your clarity <ArrowUpRight size={19} />
+              <Link href={workspaceHref} className="button button-dark">
+                {user ? "Go to your workspace" : "Find your clarity"} <ArrowUpRight size={19} />
               </Link>
             </div>
             <div className="hero-footnote">
@@ -331,8 +346,8 @@ export default function Landing() {
                 with its category and a short summary.
               </p>
             </div>
-            <Link href="/sign-up" className="telegram-promo-link">
-              Get started <ArrowRight size={15} />
+            <Link href={workspaceHref} className="telegram-promo-link">
+              {user ? "Open workspace" : "Get started"} <ArrowRight size={15} />
             </Link>
           </div>
         </section>
@@ -483,8 +498,8 @@ export default function Landing() {
             <br />
             Let’s make sense of the replies.
           </h2>
-          <Link href="/sign-up" className="button button-dark">
-            Create your account <ArrowUpRight size={18} />
+          <Link href={workspaceHref} className="button button-dark">
+            {user ? "Open your workspace" : "Create your account"} <ArrowUpRight size={18} />
           </Link>
           <span className="cta-footnote">Your workspace is private to your account.</span>
         </section>

@@ -18,6 +18,7 @@ import {
 import { ArrowLeft, ArrowUpRight, ShieldCheck, Eye, EyeOff, Check } from "lucide-react";
 import { clientAuth, firebaseConfigured } from "@/lib/firebase-client";
 import { Brand, ThemeToggle } from "./brand";
+import { useAuth } from "./providers";
 
 type Mode = "sign-in" | "sign-up" | "forgot-password";
 const schema = z.object({
@@ -28,6 +29,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -40,6 +42,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
       sessionStorage.removeItem("replylane-auth-notice");
     }
   }, []);
+  useEffect(() => {
+    if (mode !== "forgot-password" && !authLoading && user) router.replace("/app");
+  }, [authLoading, mode, router, user]);
   const {
     register,
     handleSubmit,
@@ -55,6 +60,16 @@ export function AuthForm({ mode }: { mode: Mode }) {
       : mode === "forgot-password"
         ? "Let’s get you\nback in."
         : "Good to have\nyou back.";
+  if (mode !== "forgot-password" && (authLoading || user)) {
+    return (
+      <main className="auth-page">
+        <div className="auth-main auth-redirect-state">
+          <Brand />
+          <p>Opening your workspace…</p>
+        </div>
+      </main>
+    );
+  }
   const friendly = (e: unknown) => {
     const code = (e as { code?: string })?.code || "";
     if (

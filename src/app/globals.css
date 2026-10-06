@@ -266,6 +266,45 @@ html[data-theme="dark"] .button-dark {
 .nav-login {
   font-size: 12px;
 }
+.nav-account {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 6px 11px 6px 7px;
+  font-size: 12px;
+  font-weight: 600;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+}
+.nav-account:hover {
+  background: var(--surface);
+  border-color: var(--muted);
+}
+.nav-account-avatar {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 11px;
+}
+.nav-account > svg {
+  color: var(--muted);
+}
+.auth-redirect-state {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+}
+.auth-redirect-state p {
+  color: var(--muted);
+}
 .mobile-menu {
   display: none;
 }
