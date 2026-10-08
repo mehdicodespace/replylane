@@ -13,6 +13,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(()=>{try{const p=JSON.parse(localStorage.getItem("replylane-preferences")||"{}");const t=p?.state?.theme==="dark"?"dark":"light";document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch{document.documentElement.dataset.theme="light";document.documentElement.style.colorScheme="light"}})()`,
+          }}
+        />
+      </head>
       <body>
         <Providers>{children}</Providers>
       </body>

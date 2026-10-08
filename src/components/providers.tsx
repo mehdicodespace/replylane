@@ -35,10 +35,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [preferencesReady, setPreferencesReady] = useState(false);
   const mode = useUI((s) => s.theme);
   useEffect(() => {
-    void useUI.persist.rehydrate();
-    void useDemo.persist.rehydrate();
+    void (async () => {
+      await useUI.persist.rehydrate();
+      await useDemo.persist.rehydrate();
+      setPreferencesReady(true);
+    })();
     if (!firebaseConfigured) {
       setLoading(false);
       return;
@@ -50,9 +54,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     });
   }, [queryClient]);
   useEffect(() => {
+    if (!preferencesReady) return;
     document.documentElement.dataset.theme = mode;
     document.documentElement.style.colorScheme = mode;
-  }, [mode]);
+  }, [mode, preferencesReady]);
   const theme = useMemo(
     () =>
       createTheme({

@@ -30,6 +30,7 @@ import {
   Send,
 } from "lucide-react";
 import { Brand, ThemeToggle } from "./brand";
+import { AccountMenu } from "./account-menu";
 import { useAuth } from "./providers";
 import { useDemo, useUI } from "@/lib/store";
 import { demoConnections } from "@/lib/demo";
@@ -481,9 +482,7 @@ export function Workspace({
             >
               <CircleHelp size={19} />
             </Link>
-            <span className="header-avatar">
-              {demo ? "M" : (user?.displayName || "Y").slice(0, 1)}
-            </span>
+            {demo ? <span className="header-avatar">M</span> : <AccountMenu />}
           </div>
         </header>
         <main id="workspace-main" className="workspace-main">
@@ -869,7 +868,9 @@ export function Workspace({
                 )}
                 {!demo && !user?.emailVerified ? (
                   <div className="empty-state workspace-load-error" role="status">
-                    <span><ShieldCheck size={29} strokeWidth={1.5} /></span>
+                    <span>
+                      <ShieldCheck size={29} strokeWidth={1.5} />
+                    </span>
                     <h3>Verify your email to load applications.</h3>
                     <p>Once verified, your replies and inbox data will appear here.</p>
                     <button
@@ -895,11 +896,16 @@ export function Workspace({
                   </div>
                 ) : !demo && live.isError && !live.data ? (
                   <div className="empty-state workspace-load-error" role="alert">
-                    <span><Inbox size={29} strokeWidth={1.5} /></span>
+                    <span>
+                      <Inbox size={29} strokeWidth={1.5} />
+                    </span>
                     <h3>Your applications couldn’t load.</h3>
-                    <p>{user?.emailVerified
-                      ? (live.error as Error)?.message || "The workspace request failed. Check your connection and try again."
-                      : "Verify your email address to load your workspace data."}</p>
+                    <p>
+                      {user?.emailVerified
+                        ? (live.error as Error)?.message ||
+                          "The workspace request failed. Check your connection and try again."
+                        : "Verify your email address to load your workspace data."}
+                    </p>
                     <button
                       className="button button-dark"
                       onClick={async () => {
