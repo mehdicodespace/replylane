@@ -27,9 +27,6 @@ export function AccountMenu({ showLabel = false }: { showLabel?: boolean }) {
       >
         <span className="header-avatar">{initial}</span>
         {showLabel && <span>My workspace</span>}
-        <span className="account-menu-caret" aria-hidden="true">
-          ⌄
-        </span>
       </button>
       <PopupMenu
         anchorEl={anchor}

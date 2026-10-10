@@ -217,7 +217,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
                     disabled={busy || !firebaseConfigured}
                     className="google-auth"
                   >
-                    <span className="google-g">G</span> Continue with Google
+                    <GoogleMark /> Continue with Google
                   </Button>
                   <div className="auth-divider">
                     <span />
@@ -347,4 +347,24 @@ export function AuthForm({ mode }: { mode: Mode }) {
 }
 function ArrowRightIcon() {
   return <ArrowUpRight size={17} />;
+}
+
+function GoogleMark() {
+  return (
+    <svg className="google-auth-mark" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M43.6 24.5c0-1.4-.1-2.9-.4-4.3H24v8.2h11a9.4 9.4 0 0 1-4.2 6.2v5.3h6.8c4-3.7 6-9 6-15.4Z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.8-5.3c-1.9 1.3-4.1 2-6.7 2-5.2 0-9.6-3.5-11.2-8.2H5.8v5.5A20 20 0 0 0 24 44Z"
+      />
+      <path fill="#FBBC05" d="M12.8 27.6a12 12 0 0 1 0-7.2v-5.5H5.8a20 20 0 0 0 0 18.2l7-5.5Z" />
+      <path
+        fill="#EA4335"
+        d="M24 12.2c3 0 5.6 1 7.7 3l5.9-5.9A19.7 19.7 0 0 0 24 4 20 20 0 0 0 5.8 14.9l7 5.5c1.6-4.7 6-8.2 11.2-8.2Z"
+      />
+    </svg>
+  );
 }

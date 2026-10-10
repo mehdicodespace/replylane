@@ -1341,7 +1341,7 @@ html[data-theme="dark"] .status-badge.review {
 }
 .auth-form-wrap {
   width: min(390px, 100%);
-  margin: auto;
+  margin: auto 0;
   padding: 38px 0;
 }
 .auth-back {
@@ -1371,6 +1371,21 @@ html[data-theme="dark"] .status-badge.review {
 .auth-form .MuiInputBase-root {
   font-size: 13px;
 }
+.auth-form input:-webkit-autofill,
+.auth-form input:-webkit-autofill:hover,
+.auth-form input:-webkit-autofill:focus,
+.auth-form input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--ink) !important;
+  caret-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset !important;
+  box-shadow: 0 0 0 1000px var(--surface) inset !important;
+  border-radius: inherit;
+  transition: background-color 99999s ease-out 0s;
+}
+.auth-form input:autofill {
+  color: var(--ink);
+  box-shadow: 0 0 0 1000px var(--surface) inset;
+}
 .auth-form .MuiInputLabel-root {
   font-size: 13px;
 }
@@ -1386,9 +1401,24 @@ html[data-theme="dark"] .status-badge.review {
 }
 .google-auth.MuiButton-root {
   margin-top: 26px;
-  color: var(--ink);
-  border-color: var(--border);
-  gap: 15px;
+  min-height: 54px;
+  color: #3c4043;
+  border-color: #dadce0;
+  background: #fff;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.google-auth.MuiButton-root:hover {
+  border-color: #c6c9ce;
+  background: #f8faff;
+}
+.google-auth-mark {
+  display: block;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
 }
 .auth-divider {
   display: flex;
@@ -1785,24 +1815,20 @@ html[data-theme="dark"] .status-badge.review {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 3px 5px;
-  border-radius: 999px;
+  padding: 0;
+  border-radius: 0;
   color: var(--ink);
+  background: transparent;
 }
 .account-menu-trigger:hover,
 .account-menu-trigger[aria-expanded="true"] {
-  background: var(--surface-soft);
+  background: transparent;
 }
 .account-menu-trigger .header-avatar {
   margin: 0;
 }
-.account-menu-caret {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1;
-}
 .account-menu-trigger.with-label {
-  padding: 4px 10px 4px 5px;
+  padding: 0;
   gap: 8px;
 }
 .account-menu-popup .MuiMenuItem-root {
