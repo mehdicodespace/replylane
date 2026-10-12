@@ -1,63 +1,48 @@
 "use client";
-import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu as PopupMenu, MenuItem } from "@mui/material";
 import { LogOut, Settings } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { useAuth } from "./providers";
 import { clientAuth } from "@/lib/firebase-client";
 
-export function AccountMenu({ showLabel = false }: { showLabel?: boolean }) {
+export function AccountMenu() {
   const { user } = useAuth();
   const router = useRouter();
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   if (!user) return null;
   const name = user.displayName || "Your account";
   const email = user.email || "";
   const initial = (user.displayName || user.email || "M").slice(0, 1).toUpperCase();
 
   return (
-    <>
-      <button
-        className={`account-menu-trigger${showLabel ? " with-label" : ""}`}
-        aria-label={`Account menu for ${name}`}
-        aria-haspopup="menu"
-        aria-expanded={Boolean(anchor)}
-        onClick={(event) => setAnchor(event.currentTarget)}
+    <div className="account-menu-wrap">
+      <div
+        className="account-menu-trigger"
+        role="group"
+        tabIndex={0}
+        aria-label={`${name}, ${email}. Focus or hover for account options.`}
       >
         <span className="header-avatar">{initial}</span>
-        {showLabel && <span>My workspace</span>}
-      </button>
-      <PopupMenu
-        anchorEl={anchor}
-        open={Boolean(anchor)}
-        onClose={() => setAnchor(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{ paper: { className: "account-menu-popup" } }}
-      >
-        <div className="account-menu-identity">
+        <span className="account-menu-inline-identity">
           <strong>{name}</strong>
           <span>{email}</span>
-        </div>
-        <MenuItem
-          onClick={() => {
-            setAnchor(null);
-            router.push("/app/settings");
-          }}
-        >
+        </span>
+      </div>
+      <div className="account-menu-panel" role="menu" aria-label="Account options">
+        <Link href="/app/settings" role="menuitem">
           <Settings size={16} /> Settings
-        </MenuItem>
-        <MenuItem
+        </Link>
+        <button
+          type="button"
+          role="menuitem"
           onClick={async () => {
-            setAnchor(null);
             await signOut(clientAuth());
             router.push("/");
           }}
         >
           <LogOut size={16} /> Sign out
-        </MenuItem>
-      </PopupMenu>
-    </>
+        </button>
+      </div>
+    </div>
   );
 }

@@ -1811,48 +1811,98 @@ html[data-theme="dark"] .status-badge.review {
   border-radius: 50%;
   margin-left: 9px;
 }
+.account-menu-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
 .account-menu-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0;
-  border-radius: 0;
-  color: var(--ink);
-  background: transparent;
-}
-.account-menu-trigger:hover,
-.account-menu-trigger[aria-expanded="true"] {
-  background: transparent;
+  gap: 10px;
+  cursor: default;
 }
 .account-menu-trigger .header-avatar {
   margin: 0;
 }
-.account-menu-trigger.with-label {
-  padding: 0;
-  gap: 8px;
-}
-.account-menu-popup .MuiMenuItem-root {
-  gap: 10px;
-  min-width: 170px;
-}
-.account-menu-identity {
+.account-menu-inline-identity {
   display: grid;
-  gap: 4px;
-  max-width: 260px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 5px;
+  gap: 2px;
+  max-width: 170px;
+  line-height: 1.25;
 }
-.account-menu-identity strong {
+.account-menu-inline-identity strong {
+  overflow: hidden;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.account-menu-identity span {
+.account-menu-inline-identity > span {
   overflow: hidden;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 9px;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-menu-wrap:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 5px;
+}
+.account-menu-panel {
+  position: absolute;
+  z-index: 50;
+  top: 100%;
+  right: 0;
+  display: grid;
+  min-width: 160px;
+  padding-top: 9px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition:
+    opacity 130ms ease,
+    transform 130ms ease,
+    visibility 130ms;
+}
+.account-menu-wrap:hover .account-menu-panel,
+.account-menu-wrap:focus-within .account-menu-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.account-menu-panel > a,
+.account-menu-panel > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 14px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-size: 13px;
+  text-align: left;
+}
+.account-menu-panel > a:first-child {
+  border-radius: 10px 10px 0 0;
+  padding-top: 7px;
+  min-height: 47px;
+  box-shadow: 0 10px 24px #0002;
+}
+.account-menu-panel > button:last-child {
+  border-radius: 0 0 10px 10px;
+  padding-bottom: 7px;
+  box-shadow: 0 10px 24px #0002;
+}
+.account-menu-panel > a:hover,
+.account-menu-panel > button:hover {
+  background: var(--surface-soft);
+}
+.account-menu-panel svg {
+  color: var(--muted);
+  flex: 0 0 auto;
 }
 .demo-badge {
   font-size: 8px;
@@ -5305,16 +5355,26 @@ html[data-theme="dark"] .attention-icon {
   .marketing-header .nav-actions > .button {
     display: none;
   }
-  .workspace-header .header-avatar {
-    display: none;
-  }
   .legal-header-inner {
     width: calc(100% - 28px);
   }
   .legal-header-actions {
     gap: 8px;
   }
-  .legal-header .nav-account.with-label > span:not(.header-avatar) {
+  .account-menu-inline-identity {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .account-menu-inline-identity > span {
+    display: none;
+  }
+}
+@media (max-width: 520px) {
+  .account-menu-inline-identity {
+    display: none;
+  }
+  .legal-header-inner > nav {
     display: none;
   }
 }

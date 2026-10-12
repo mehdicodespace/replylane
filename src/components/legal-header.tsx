@@ -18,7 +18,7 @@ export function LegalHeader() {
           <ThemeToggle />
           {!loading &&
             (user ? (
-              <AccountMenu showLabel />
+              <AccountMenu />
             ) : (
               <>
                 <Link className="nav-login" href="/sign-in">
