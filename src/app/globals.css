@@ -3386,9 +3386,9 @@ html[data-theme="dark"] .attention-icon {
   white-space: nowrap;
 }
 .legal-page {
-  max-width: 780px;
-  margin: auto;
-  padding: 35px 30px 90px;
+  width: min(1120px, calc(100% - 60px));
+  margin: 0 auto;
+  padding: 35px 0 90px;
 }
 .legal-header {
   position: sticky;
@@ -3441,6 +3441,7 @@ html[data-theme="dark"] .attention-icon {
   letter-spacing: -1px;
 }
 .legal-page > p {
+  max-width: 920px;
   font-size: 13px;
   color: var(--muted);
   line-height: 1.9;
@@ -5131,7 +5132,8 @@ html[data-theme="dark"] .attention-icon {
     font-size: 8px;
   }
   .legal-page {
-    padding-inline: 24px;
+    width: calc(100% - 32px);
+    padding-inline: 0;
   }
   .legal-page h1 {
     font-size: 38px;
@@ -5356,7 +5358,7 @@ html[data-theme="dark"] .attention-icon {
     display: none;
   }
   .legal-header-inner {
-    width: calc(100% - 28px);
+    width: calc(100% - 32px);
   }
   .legal-header-actions {
     gap: 8px;
@@ -5376,6 +5378,9 @@ html[data-theme="dark"] .attention-icon {
   }
   .legal-header-inner > nav {
     display: none;
+  }
+  .legal-header-inner {
+    width: calc(100% - 32px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -5410,6 +5415,35 @@ html[data-theme="dark"] .attention-icon {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--ink);
+}
+.applications-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+}
+.telegram-inline-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 39px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, #67c7d4 34%, var(--border));
+  border-radius: 9px;
+  color: #67c7d4;
+  background: color-mix(in srgb, #67c7d4 7%, var(--surface));
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.telegram-inline-action.is-connected {
+  border-color: color-mix(in srgb, #438d63 34%, var(--border));
+  color: #438d63;
+  background: color-mix(in srgb, #438d63 7%, var(--surface));
+}
+.telegram-inline-action:hover {
+  filter: brightness(1.08);
 }
 .kanban-lane {
   min-height: 160px;
@@ -5849,55 +5883,13 @@ html[data-theme="dark"] .attention-icon {
     font-size: 11px;
     padding: 10px 12px;
   }
+  .applications-title-actions {
+    margin-top: 12px;
+  }
   .compact-card {
     min-height: 74px;
   }
 }
-.telegram-app-prompt {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: -5px 0 18px;
-  padding: 12px 15px;
-  border: 1px solid color-mix(in srgb, #67c7d4 25%, var(--border));
-  border-radius: 10px;
-  background: color-mix(in srgb, #67c7d4 6%, var(--surface));
-}
-.telegram-app-prompt.is-connected {
-  border-color: color-mix(in srgb, #438d63 28%, var(--border));
-  background: color-mix(in srgb, #438d63 6%, var(--surface));
-}
-.telegram-app-icon {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 9px;
-  color: #67c7d4;
-  background: color-mix(in srgb, #67c7d4 12%, var(--surface));
-}
-.telegram-app-prompt.is-connected .telegram-app-icon {
-  color: #438d63;
-  background: color-mix(in srgb, #438d63 12%, var(--surface));
-}
-.telegram-app-copy {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-  flex: 1;
-}
-.telegram-app-copy strong {
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 650;
-}
-.telegram-app-copy small {
-  color: var(--muted);
-  font-size: 10px;
-  line-height: 1.6;
-}
-.telegram-app-action,
 .telegram-promo-link {
   display: inline-flex;
   align-items: center;
@@ -5909,7 +5901,6 @@ html[data-theme="dark"] .attention-icon {
   font-weight: 650;
   text-decoration: none;
 }
-.telegram-app-action:hover,
 .telegram-promo-link:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -5958,13 +5949,6 @@ html[data-theme="dark"] .attention-icon {
   line-height: 1.7;
 }
 @media (max-width: 640px) {
-  .telegram-app-prompt {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-  .telegram-app-action {
-    margin-left: 46px;
-  }
   .telegram-promo {
     align-items: flex-start;
     flex-wrap: wrap;

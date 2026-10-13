@@ -606,38 +606,29 @@ export function Workspace({
                         : `${filtered.length} application replies · select a company for details`}
                   </p>
                 </div>
-                <button
-                  className="button button-small inbox-shortcut"
-                  onClick={() => go("connections")}
-                >
-                  <Link2 size={16} /> Connected inboxes
-                </button>
-              </div>
-              {!demo && telegramStatus.data?.configured && (
-                <div
-                  className={`telegram-app-prompt${telegramStatus.data.connected ? " is-connected" : ""}`}
-                >
-                  <span className="telegram-app-icon">
-                    <Send size={16} />
-                  </span>
-                  <span className="telegram-app-copy">
-                    <strong>
-                      {telegramStatus.data.connected
-                        ? "Telegram alerts are on"
-                        : "Get new reply alerts on Telegram"}
-                    </strong>
-                    <small>
-                      {telegramStatus.data.connected
-                        ? `Connected to @${telegramStatus.data.botUsername}. New replies will send a short summary and category.`
-                        : "Get a message with the company, category, and a short summary when a new reply is processed."}
-                    </small>
-                  </span>
-                  <Link href="/app/settings" className="telegram-app-action">
-                    {telegramStatus.data.connected ? "Manage alerts" : "Connect Telegram"}
-                    <ArrowUpRight size={14} />
-                  </Link>
+                <div className="applications-title-actions">
+                  <button
+                    className="button button-small inbox-shortcut"
+                    onClick={() => go("connections")}
+                  >
+                    <Link2 size={16} /> Connected inboxes
+                  </button>
+                  {!demo && telegramStatus.data?.configured && (
+                    <Link
+                      href="/app/settings"
+                      className={`telegram-inline-action${telegramStatus.data.connected ? " is-connected" : ""}`}
+                      title={
+                        telegramStatus.data.connected
+                          ? `Connected to @${telegramStatus.data.botUsername}; alerts are on`
+                          : "Get new reply alerts in Telegram"
+                      }
+                    >
+                      <Send size={15} />
+                      {telegramStatus.data.connected ? "Telegram alerts on" : "Connect Telegram"}
+                    </Link>
+                  )}
                 </div>
-              )}
+              </div>
               <section className="applications-section" aria-label="Application board">
                 <div className="applications-heading">
                   <div
