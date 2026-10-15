@@ -5429,21 +5429,66 @@ html[data-theme="dark"] .attention-icon {
   gap: 7px;
   min-height: 39px;
   padding: 0 12px;
-  border: 1px solid color-mix(in srgb, #67c7d4 34%, var(--border));
+  border: 1px solid color-mix(in srgb, #229ed9 38%, var(--border));
   border-radius: 9px;
-  color: #67c7d4;
-  background: color-mix(in srgb, #67c7d4 7%, var(--surface));
+  color: #229ed9;
+  background: color-mix(in srgb, #229ed9 8%, var(--surface));
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
+.telegram-inline-icon {
+  position: relative;
+  display: grid;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: #229ed9;
+}
+.telegram-inline-icon svg {
+  width: 14px;
+  height: 14px;
+}
+.telegram-inline-icon::after {
+  position: absolute;
+  inset: -3px;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  content: "";
+}
 .telegram-inline-action.is-connected {
-  border-color: color-mix(in srgb, #438d63 34%, var(--border));
-  color: #438d63;
-  background: color-mix(in srgb, #438d63 7%, var(--surface));
+  border-color: color-mix(in srgb, #438d63 42%, var(--border));
+  color: #6fc58c;
+  background: color-mix(in srgb, #438d63 9%, var(--surface));
+}
+.telegram-inline-action.is-connected .telegram-inline-icon {
+  background: #438d63;
+}
+.telegram-inline-action.is-connected .telegram-inline-icon::after {
+  border-color: #6fc58c;
+  animation: telegram-active-pulse 2.4s ease-out infinite;
 }
 .telegram-inline-action:hover {
   filter: brightness(1.08);
+}
+@keyframes telegram-active-pulse {
+  0% {
+    opacity: 0.75;
+    transform: scale(0.72);
+  }
+  75%,
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .telegram-inline-icon::after {
+    animation: none !important;
+  }
 }
 .kanban-lane {
   min-height: 160px;

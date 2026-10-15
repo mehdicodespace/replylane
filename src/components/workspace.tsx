@@ -27,7 +27,6 @@ import {
   ShieldCheck,
   LogOut,
   CircleHelp,
-  Send,
 } from "lucide-react";
 import { Brand, ThemeToggle } from "./brand";
 import { AccountMenu } from "./account-menu";
@@ -623,7 +622,14 @@ export function Workspace({
                           : "Get new reply alerts in Telegram"
                       }
                     >
-                      <Send size={15} />
+                      <span className="telegram-inline-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M21.7 3.3 18.5 20c-.2 1.1-.8 1.4-1.7.9l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.4-4.9 9-8.1c.4-.4-.1-.6-.6-.2L6.4 13.8l-4.7-1.5c-1-.3-1-1 .2-1.5L20.3 3.1c.8-.3 1.6.2 1.4.2Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </span>
                       {telegramStatus.data.connected ? "Telegram alerts on" : "Connect Telegram"}
                     </Link>
                   )}
