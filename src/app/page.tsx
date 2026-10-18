@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -15,10 +16,16 @@ import {
   CircleCheck,
   Menu,
   X,
-  Send,
 } from "lucide-react";
-import { Brand, ThemeToggle } from "@/components/brand";
+import { Brand, TelegramBrandMark, ThemeToggle } from "@/components/brand";
 import { useAuth } from "@/components/providers";
+import { api } from "@/lib/firebase-client";
+
+interface TelegramStatus {
+  configured: boolean;
+  connected: boolean;
+  botUsername?: string;
+}
 
 const faqs = [
   [
@@ -45,7 +52,19 @@ const faqs = [
 
 export default function Landing() {
   const { user, loading: authLoading } = useAuth();
+  const telegramStatus = useQuery({
+    queryKey: ["telegram-status"],
+    queryFn: () => api<TelegramStatus>("/api/telegram"),
+    enabled: Boolean(user),
+    staleTime: 60_000,
+  });
   const workspaceHref = user ? "/app" : "/sign-up";
+  const telegramConnected = Boolean(
+    telegramStatus.data?.configured && telegramStatus.data.connected,
+  );
+  const telegramUnavailable = Boolean(
+    user && telegramStatus.data && !telegramStatus.data.configured,
+  );
   const accountInitial = (user?.displayName || user?.email || "M").slice(0, 1).toUpperCase();
   const [open, setOpen] = useState<number | null>(0);
   const [mobile, setMobile] = useState(false);
@@ -169,7 +188,7 @@ export default function Landing() {
                   <span className="preview-side-item">
                     <CircleCheck size={15} />
                   </span>
-                  <span className="preview-side-bottom">M</span>
+                  <span className="preview-side-bottom">D</span>
                 </div>
                 <div className="preview-content">
                   <div className="preview-greeting">
@@ -335,19 +354,35 @@ export default function Landing() {
               </p>
             </article>
           </div>
-          <div className="telegram-promo">
+          <div className={`telegram-promo${telegramConnected ? " is-connected" : ""}`}>
             <span className="telegram-promo-icon">
-              <Send size={19} />
+              <TelegramBrandMark />
             </span>
             <div>
-              <strong>Keep the important updates close.</strong>
+              <strong>
+                {telegramConnected
+                  ? "Telegram alerts are on"
+                  : telegramUnavailable
+                    ? "Telegram alerts aren’t enabled here yet."
+                    : "New replies, straight to Telegram."}
+              </strong>
               <p>
-                Connect Telegram to get a private message when a new application reply is sorted,
-                with its category and a short summary.
+                {telegramConnected
+                  ? `Connected to @${telegramStatus.data?.botUsername || "Replylane bot"}. New replies arrive with their category and a short summary; older imports stay quiet.`
+                  : telegramUnavailable
+                    ? "This deployment needs Telegram bot settings before accounts can connect notifications."
+                    : "Connect the bot from Settings to get a private message for each newly processed reply, with the company, category, and a short summary. Older imports stay quiet."}
               </p>
             </div>
-            <Link href={workspaceHref} className="telegram-promo-link">
-              {user ? "Open workspace" : "Get started"} <ArrowRight size={15} />
+            <Link href={user ? "/app/settings" : workspaceHref} className="telegram-promo-link">
+              {telegramConnected
+                ? "Manage alerts"
+                : telegramUnavailable
+                  ? "Open workspace"
+                  : user
+                    ? "Connect Telegram"
+                    : "Get started"}{" "}
+              <ArrowRight size={15} />
             </Link>
           </div>
         </section>
@@ -414,7 +449,7 @@ export default function Landing() {
                 </h4>
                 <p>
                   {preview === "fa"
-                    ? "مهدی عزیز، از آشنایی با تجربیات شما خوشحال شدیم. مایلیم شما را به یک جلسه مصاحبه فنی دعوت کنیم."
+                    ? "دانیل عزیز، از آشنایی با تجربیات شما خوشحال شدیم. مایلیم شما را به یک جلسه مصاحبه فنی دعوت کنیم."
                     : preview === "de"
                       ? "Dein Profil hat uns überzeugt. Wir möchten dich gerne zu einem ersten Gespräch mit unserem Team einladen."
                       : "Your experience caught our attention. We'd love to invite you to an introductory conversation with our team."}

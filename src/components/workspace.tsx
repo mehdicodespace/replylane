@@ -28,7 +28,7 @@ import {
   LogOut,
   CircleHelp,
 } from "lucide-react";
-import { Brand, ThemeToggle } from "./brand";
+import { Brand, TelegramBrandMark, ThemeToggle } from "./brand";
 import { AccountMenu } from "./account-menu";
 import { useAuth } from "./providers";
 import { useDemo, useUI } from "@/lib/store";
@@ -362,7 +362,7 @@ export function Workspace({
           <div>
             <strong>
               {demo
-                ? "Mehdi’s workspace"
+                ? "Daniel’s workspace"
                 : `${user?.displayName?.split(" ")[0] || "Your"}${user?.displayName ? "’s" : ""} workspace`}
             </strong>
             <span>{demo ? "A preview of possibility" : "Your personal space"}</span>
@@ -623,12 +623,7 @@ export function Workspace({
                       }
                     >
                       <span className="telegram-inline-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M21.7 3.3 18.5 20c-.2 1.1-.8 1.4-1.7.9l-4.8-3.5-2.3 2.2c-.3.3-.5.5-1 .5l.4-4.9 9-8.1c.4-.4-.1-.6-.6-.2L6.4 13.8l-4.7-1.5c-1-.3-1-1 .2-1.5L20.3 3.1c.8-.3 1.6.2 1.4.2Z"
-                            fill="currentColor"
-                          />
-                        </svg>
+                        <TelegramBrandMark />
                       </span>
                       {telegramStatus.data.connected ? "Telegram alerts on" : "Connect Telegram"}
                     </Link>

@@ -7,12 +7,11 @@ Replylane finds replies from employers, summarizes what happened, and keeps each
 ## Preview
 
 <p align="center">
-  <img src="docs/images/workspace-light.jpg" alt="Replylane application board with status columns and reply cards" width="100%">
+  <img src="docs/images/landing-light.jpg" alt="Replylane landing page" width="100%">
 </p>
 
 <p align="center">
-  <img src="docs/images/landing-light.jpg" alt="Replylane landing page" width="49%">
-  <img src="docs/images/mobile-dark.jpg" alt="Replylane workspace on a phone in dark mode" width="49%">
+  <img src="docs/images/mobile-dark.jpg" alt="Replylane on a phone in dark mode" width="34%">
 </p>
 
 ## What it does

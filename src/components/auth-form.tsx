@@ -319,29 +319,6 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <ShieldCheck size={15} /> Your next opportunity deserves a little peace of mind.
         </footer>
       </div>
-      <aside className="auth-art">
-        <div className="auth-art-orbit" />
-        <span className="auth-art-spark">✳</span>
-        <div className="auth-quote">
-          <span className="eyebrow">LESS NOISE. MORE NEXT.</span>
-          <h2>
-            Behind every reply,
-            <br />
-            there’s a next step.
-          </h2>
-          <p>Let’s help you find yours.</p>
-          <div className="auth-sample-card">
-            <span className="company-avatar violet">L</span>
-            <div>
-              <strong>You’re invited.</strong>
-              <span>Your next conversation is waiting.</span>
-            </div>
-            <ArrowUpRight size={22} />
-          </div>
-          <span className="auth-art-caption">A little more clarity for what comes next.</span>
-        </div>
-        <span className="auth-art-bottom">A LITTLE CLARITY GOES A LONG WAY. ↗</span>
-      </aside>
     </main>
   );
 }
