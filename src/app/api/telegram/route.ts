@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { authenticate, db, hash, rateLimit, responseError, userRef } from "@/lib/server/core";
 import {
   createTelegramLink,
-  ensureTelegramWebhook,
   telegramConfigured,
   telegramLocalPollingEnabled,
 } from "@/lib/server/telegram";
@@ -14,8 +13,6 @@ export async function GET(request: Request) {
     const uid = await authenticate(request);
     const owner = await userRef(uid).get();
     const telegram = owner.data()?.telegram;
-    if (telegram?.chatId && telegramConfigured() && !telegramLocalPollingEnabled())
-      await ensureTelegramWebhook();
     return NextResponse.json({
       configured: telegramConfigured(),
       localPolling: telegramConfigured() && telegramLocalPollingEnabled(),

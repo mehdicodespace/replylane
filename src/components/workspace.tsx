@@ -357,7 +357,7 @@ export function Workspace({
         </div>
         <div className="workspace-selector">
           <span className="workspace-avatar">
-            {demo ? "M" : (user?.displayName || user?.email || "Y").slice(0, 1).toUpperCase()}
+            {demo ? "D" : (user?.displayName || user?.email || "Y").slice(0, 1).toUpperCase()}
           </span>
           <div>
             <strong>
@@ -419,7 +419,7 @@ export function Workspace({
         <div className="sidebar-bottom">
           {demo ? (
             <Link href="/sign-up" className="sidebar-account">
-              <span className="workspace-avatar">M</span>
+              <span className="workspace-avatar">D</span>
               <div>
                 <strong>Make this space yours</strong>
                 <span>Create a free account</span>
@@ -481,7 +481,7 @@ export function Workspace({
             >
               <CircleHelp size={19} />
             </Link>
-            {demo ? <span className="header-avatar">M</span> : <AccountMenu />}
+            {demo ? <span className="header-avatar">D</span> : <AccountMenu />}
           </div>
         </header>
         <main id="workspace-main" className="workspace-main">

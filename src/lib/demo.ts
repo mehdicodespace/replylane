@@ -2,34 +2,34 @@ import type { Application, Connection } from "./domain";
 
 const records = [
   [
-    "Linear",
+    "Revolut",
     "Frontend Engineer",
     "interview",
     "en",
-    "Let's meet, Daniel",
+    "Your interview with Revolut",
     "Your application stood out. Pick a time for a 30-minute conversation with our engineering team.",
     "Choose a time for your introductory call.",
     0,
     "violet",
   ],
   [
-    "Vercel",
+    "Miro",
     "Design Engineer",
     "next_step",
     "en",
-    "Your next step at Vercel",
+    "Your next step at Miro",
     "We enjoyed learning about your work. We'd love to see how you approach a small interface challenge.",
     "Review the take-home brief and confirm availability.",
     1,
     "ink",
   ],
   [
-    "تپسی",
-    "توسعه‌دهنده فرانت‌اند",
+    "Wise",
+    "Frontend Engineer",
     "interview",
-    "fa",
-    "دعوت به مصاحبه فنی",
-    "دانیل عزیز، رزومه شما بررسی شد. خوشحال می‌شویم برای یک جلسه مصاحبه فنی با شما هماهنگ کنیم.",
+    "en",
+    "Invitation to a technical interview",
+    "We enjoyed reviewing your experience and would like to arrange a technical interview with our team.",
     "Reply with your availability for the technical interview.",
     1,
     "orange",
@@ -46,18 +46,18 @@ const records = [
     "peach",
   ],
   [
-    "Figma",
+    "Zalando",
     "Software Engineer, Web",
     "received",
     "en",
-    "Thanks for applying to Figma",
+    "Thanks for applying to Zalando",
     "Thanks for your interest in our Web Platform team. Your application is with our recruiting team for review.",
     "No action needed right now.",
     2,
     "pink",
   ],
   [
-    "Doist",
+    "Adyen",
     "Frontend Developer",
     "offer",
     "en",
@@ -68,7 +68,7 @@ const records = [
     "red",
   ],
   [
-    "Zalando",
+    "Alan",
     "Frontend Engineer",
     "rejected",
     "de",
@@ -79,18 +79,18 @@ const records = [
     "orange",
   ],
   [
-    "دیجی‌کالا",
+    "Delivery Hero",
     "React Developer",
     "received",
-    "fa",
-    "دریافت درخواست همکاری",
-    "درخواست همکاری شما دریافت شد. همکاران ما در تیم منابع انسانی رزومه شما را بررسی خواهند کرد.",
+    "en",
+    "We received your application",
+    "Thanks for applying. Our recruiting team has received your application and will be in touch after review.",
     "Your application is being reviewed.",
     4,
     "red",
   ],
   [
-    "Notion",
+    "N26",
     "Product Engineer",
     "review",
     "en",
@@ -112,7 +112,7 @@ const records = [
     "green",
   ],
   [
-    "Alan",
+    "Skyscanner",
     "Frontend Engineer",
     "next_step",
     "fr",
@@ -123,7 +123,7 @@ const records = [
     "blue",
   ],
   [
-    "Buffer",
+    "Back Market",
     "Senior Frontend Engineer",
     "received",
     "en",
@@ -153,35 +153,31 @@ export function createDemoApplications(): Application[] {
       subject: r[4],
       excerpt: r[5],
       summary:
-        r[3] === "fa"
-          ? i === 2
-            ? "Tapsi has invited you to a technical interview. They would like to arrange a time with you."
-            : "Digikala has received your application. The recruiting team will review your résumé."
-          : r[3] === "de"
-            ? i === 3
-              ? "Personio confirmed receipt of your application. Their team will contact you after reviewing it."
-              : "Zalando has decided to move forward with other candidates."
-            : r[3] === "fr"
-              ? "Alan would like to continue with a technical interview with two team members."
-              : r[5],
+        r[3] === "de"
+          ? i === 3
+            ? "Personio confirmed receipt of your application. Their team will contact you after reviewing it."
+            : "Alan has decided to move forward with other candidates."
+          : r[3] === "fr"
+            ? "Skyscanner would like to continue with a technical interview with two team members."
+            : r[5],
       nextAction: r[6],
       receivedAt: date.toISOString(),
       confidence: r[2] === "review" ? 0.68 : 0.94 + (i % 5) / 100,
       sender: [
-        "Sarah · Linear",
-        "Vercel Talent",
-        "تیم جذب تپسی",
+        "Eva · Revolut",
+        "Miro Talent",
+        "Wise Recruiting",
         "Lena · Personio",
-        "Figma Recruiting",
-        "Doist People",
-        "Zalando Talent",
-        "تیم جذب دیجی‌کالا",
-        "Notion Recruiting",
+        "Zalando Recruiting",
+        "Adyen People",
+        "Alan Talent",
+        "Delivery Hero Recruiting",
+        "N26 Talent",
         "Spotify Talent",
-        "Alan Recruiting",
-        "Buffer People",
+        "Skyscanner Recruiting",
+        "Back Market People",
       ][i],
-      senderEmail: `careers@${["linear.app", "vercel.com", "tapsi.ir", "personio.com", "figma.com", "doist.com", "zalando.de", "digikala.com", "makenotion.com", "spotify.com", "alan.com", "buffer.com"][i]}`,
+      senderEmail: `careers@${["revolut.com", "miro.com", "wise.com", "personio.com", "zalando.com", "adyen.com", "alan.com", "deliveryhero.com", "n26.com", "spotify.com", "skyscanner.net", "backmarket.com"][i]}`,
       deadline: [0, 1, 5].includes(i) ? deadline.toISOString().slice(0, 10) : null,
       starred: [0, 5].includes(i),
       archived: false,

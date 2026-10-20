@@ -50,6 +50,69 @@ const faqs = [
   ],
 ];
 
+function GoogleBrandMark() {
+  return (
+    <svg className="provider-logo google-logo" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.7c3.9-3.6 6-8.8 6-15Z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 44c5.5 0 10.1-1.8 13.5-4.9l-6.7-5.1c-1.8 1.2-4 1.9-6.8 1.9-5.2 0-9.6-3.5-11.2-8.2H5.9v5.3A20 20 0 0 0 24 44Z"
+      />
+      <path fill="#FBBC05" d="M12.8 27.7a12 12 0 0 1 0-7.5v-5.3H5.9a20 20 0 0 0 0 18.1l6.9-5.3Z" />
+      <path
+        fill="#EA4335"
+        d="M24 12c3 0 5.7 1 7.8 3.1l5.9-5.9C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.9 14.9l6.9 5.3C14.4 15.5 18.8 12 24 12Z"
+      />
+    </svg>
+  );
+}
+
+function OutlookBrandMark() {
+  return (
+    <svg className="provider-logo outlook-logo" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#0078D4" d="M4 12.2 25 8v32L4 36V12.2Z" />
+      <path fill="#28A8EA" d="M27 10h17v28H27z" />
+      <path fill="#50D9FF" d="M27 10h17v13.5H27z" />
+      <path fill="#0078D4" d="M27 23.5h17V38H27z" />
+      <path
+        fill="#fff"
+        d="M16 16.2c-4 0-6.8 3.1-6.8 7.8s2.8 7.8 6.8 7.8 6.8-3.1 6.8-7.8-2.8-7.8-6.8-7.8Zm0 11.7c-1.8 0-2.9-1.5-2.9-3.9s1.1-3.9 2.9-3.9 2.9 1.5 2.9 3.9-1.1 3.9-2.9 3.9Z"
+      />
+    </svg>
+  );
+}
+
+function IcloudBrandMark() {
+  return (
+    <svg className="provider-logo icloud-logo" viewBox="0 0 48 48" aria-hidden="true">
+      <defs>
+        <linearGradient id="icloud-fill" x1="0" x2="1" y1="0" y2="1">
+          <stop stopColor="#49C9F5" />
+          <stop offset="1" stopColor="#1683E8" />
+        </linearGradient>
+      </defs>
+      <path
+        fill="url(#icloud-fill)"
+        d="M37.2 21.2a13.2 13.2 0 0 0-25.5-3.7A10.3 10.3 0 0 0 13 38h23.3a8.4 8.4 0 0 0 .9-16.8Z"
+      />
+    </svg>
+  );
+}
+
+function FastmailBrandMark() {
+  return (
+    <span className="fastmail-mark" aria-hidden="true">
+      <i />
+      <i />
+      <i />
+      <i />
+    </span>
+  );
+}
+
 export default function Landing() {
   const { user, loading: authLoading } = useAuth();
   const telegramStatus = useQuery({
@@ -220,8 +283,8 @@ export default function Landing() {
                         Received <b>2</b>
                       </span>
                       <MiniCard
-                        letter="F"
-                        company="Figma"
+                        letter="S"
+                        company="Spotify"
                         role="Software Engineer"
                         caption="Application received"
                       />
@@ -238,15 +301,15 @@ export default function Landing() {
                         Moving forward <b>2</b>
                       </span>
                       <MiniCard
-                        letter="L"
-                        company="Linear"
+                        letter="R"
+                        company="Revolut"
                         role="Frontend Engineer"
                         caption="Interview invitation"
                         featured
                       />
                       <MiniCard
-                        letter="V"
-                        company="Vercel"
+                        letter="Z"
+                        company="Zalando"
                         role="Design Engineer"
                         caption="Take-home challenge"
                       />
@@ -274,16 +337,21 @@ export default function Landing() {
           <span>YOUR INBOX, YOUR CHOICE</span>
           <div>
             <span className="provider-word">
-              <span className="google-g">M</span> Gmail
+              <GoogleBrandMark /> Gmail
             </span>
             <span className="provider-word">
-              <span className="outlook-logo">▦</span> Outlook
+              <OutlookBrandMark /> Outlook
             </span>
             <span className="provider-word">
-              <span className="icloud-logo">☁</span> iCloud
+              <IcloudBrandMark /> iCloud
             </span>
-            <span className="provider-word yahoo-word">yahoo!</span>
-            <span className="provider-word fastmail-word">Fastmail</span>
+            <span className="provider-word yahoo-word">
+              <span>yahoo!</span>
+            </span>
+            <span className="provider-word fastmail-word">
+              <FastmailBrandMark />
+              Fastmail
+            </span>
             <span className="compatibility-more">+ custom IMAP</span>
           </div>
         </section>
@@ -396,15 +464,15 @@ export default function Landing() {
                 The same clarity.
               </h2>
               <p>
-                A reply from Berlin. An interview in Tehran. An opportunity a little further from
+                A reply from Berlin. An interview in Tokyo. An opportunity a little further from
                 home. Keep the original message, with an English summary that helps you see your
                 next step.
               </p>
               <div className="language-pills" role="group" aria-label="Preview email language">
                 {[
                   ["en", "English"],
-                  ["fa", "فارسی"],
-                  ["de", "Deutsch"],
+                  ["ar", "العربية"],
+                  ["es", "Español"],
                 ].map(([code, label]) => (
                   <button
                     key={code}
@@ -425,11 +493,11 @@ export default function Landing() {
                 <span className="company-avatar violet">L</span>
                 <div>
                   <strong>
-                    {preview === "fa"
-                      ? "تیم جذب تپسی"
-                      : preview === "de"
-                        ? "Personio Recruiting"
-                        : "Linear Recruiting"}
+                    {preview === "ar"
+                      ? "فريق التوظيف في سبوتيفاي"
+                      : preview === "es"
+                        ? "Selección de Spotify"
+                        : "Spotify Recruiting"}
                   </strong>
                   <span>to you · illustrative example</span>
                 </div>
@@ -437,21 +505,21 @@ export default function Landing() {
               </div>
               <div
                 className="translation-original"
-                dir={preview === "fa" ? "rtl" : "ltr"}
+                dir={preview === "ar" ? "rtl" : "ltr"}
                 lang={preview}
               >
                 <h4>
-                  {preview === "fa"
-                    ? "دعوت به مصاحبه"
-                    : preview === "de"
-                      ? "Wir möchten dich kennenlernen"
+                  {preview === "ar"
+                    ? "دعوة لإجراء مقابلة"
+                    : preview === "es"
+                      ? "Nos gustaría conocerte"
                       : "We'd love to meet you"}
                 </h4>
                 <p>
-                  {preview === "fa"
-                    ? "دانیل عزیز، از آشنایی با تجربیات شما خوشحال شدیم. مایلیم شما را به یک جلسه مصاحبه فنی دعوت کنیم."
-                    : preview === "de"
-                      ? "Dein Profil hat uns überzeugt. Wir möchten dich gerne zu einem ersten Gespräch mit unserem Team einladen."
+                  {preview === "ar"
+                    ? "مرحبًا دانيال، لفتت خبراتك انتباهنا. يسعدنا دعوتك لإجراء مقابلة أولية مع فريقنا."
+                    : preview === "es"
+                      ? "Tu experiencia nos ha llamado la atención. Nos gustaría invitarte a una primera conversación con nuestro equipo."
                       : "Your experience caught our attention. We'd love to invite you to an introductory conversation with our team."}
                 </p>
               </div>

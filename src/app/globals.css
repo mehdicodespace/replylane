@@ -242,6 +242,89 @@ html[data-theme="dark"] .button-dark {
   background: var(--bg);
   overflow: hidden;
 }
+html[data-theme="dark"] .landing {
+  --landing-rose: #ef9b9a;
+  --landing-cyan: #70d3d2;
+  --landing-green: #9bc58e;
+  background:
+    radial-gradient(ellipse at 77% 13%, #34304455 0, transparent 34%),
+    radial-gradient(ellipse at 10% 43%, #26344440 0, transparent 31%), #15171d;
+}
+html[data-theme="dark"] .marketing-header {
+  border-bottom: 1px solid #ffffff12;
+}
+html[data-theme="dark"] .marketing-nav a:hover,
+html[data-theme="dark"] .nav-login:hover {
+  color: #c8b8ff;
+}
+html[data-theme="dark"] .hero h1 > span {
+  color: #b8b7ff;
+}
+html[data-theme="dark"] .hero-copy > p:not(.hero-description) {
+  color: #f3dfd1;
+}
+html[data-theme="dark"] .hero-description {
+  color: #b9beca;
+}
+html[data-theme="dark"] .hero-art:before {
+  background:
+    radial-gradient(ellipse at 55% 45%, #7868a733, transparent 61%),
+    radial-gradient(ellipse at 35% 73%, #3d9a8a2c, transparent 57%),
+    radial-gradient(ellipse at 77% 25%, #c9785d22, transparent 49%);
+  filter: blur(5px);
+}
+html[data-theme="dark"] .art-orbit {
+  border-color: #b4a9e51b;
+}
+html[data-theme="dark"] .incoming-mail,
+html[data-theme="dark"] .offer-note {
+  background: #242731;
+  border-color: #525467;
+  box-shadow: 0 16px 42px #05060a70;
+}
+html[data-theme="dark"] .mini-icon {
+  color: #7ed9dc;
+  background: #214047;
+}
+html[data-theme="dark"] .notification-dot {
+  background: #a5d979;
+  box-shadow: 0 0 11px #a5d979a0;
+}
+html[data-theme="dark"] .preview-window {
+  background: #1c1f27;
+  border-color: #454956;
+  box-shadow: 0 25px 70px #05060a55;
+}
+html[data-theme="dark"] .preview-top {
+  background: #252934;
+}
+html[data-theme="dark"] .mini-lane-label i {
+  background: #70d3d2;
+  box-shadow: 0 0 8px #70d3d277;
+}
+html[data-theme="dark"] .mini-lane-label.purple i {
+  background: #b7a2ff;
+  box-shadow: 0 0 8px #b7a2ff77;
+}
+html[data-theme="dark"] .mini-card.featured {
+  background: #282639;
+  border-color: #a99af0;
+}
+html[data-theme="dark"] .mini-tag.interview {
+  color: #e0d6ff;
+  background: #483b62;
+}
+html[data-theme="dark"] .offer-note-icon {
+  background: #294638;
+  color: #a9e5bb;
+}
+html[data-theme="dark"] .offer-note > span:last-child,
+html[data-theme="dark"] .floating-star {
+  color: #c6d889;
+}
+html[data-theme="dark"] .compatibility {
+  border-color: #ffffff1c;
+}
 .marketing-header {
   height: 100px;
   display: flex;
@@ -403,7 +486,11 @@ html[data-theme="dark"] .hero h1 > span {
   height: 440px;
   top: 0;
   right: 0;
-  background: radial-gradient(ellipse, #e1ebce8c, transparent 70%);
+  background:
+    radial-gradient(ellipse at 55% 43%, #a99af04d, transparent 62%),
+    radial-gradient(ellipse at 34% 73%, #62c6b84d, transparent 56%),
+    radial-gradient(ellipse at 79% 25%, #f2a38c42, transparent 50%);
+  filter: blur(3px);
   z-index: -1;
 }
 .preview-window {
@@ -623,6 +710,18 @@ html[data-theme="dark"] .hero h1 > span {
   background: #f3d8b9;
   color: #8e6856;
 }
+.mini-company.spotify {
+  background: #1ed760;
+  color: #123c25;
+}
+.mini-company.revolut {
+  background: #17191d;
+  color: #ffffff;
+}
+.mini-company.zalando {
+  background: #f7a600;
+  color: #2b2110;
+}
 .mini-card h4 {
   font-size: 9px;
   font-weight: 550;
@@ -794,28 +893,62 @@ html[data-theme="dark"] .hero h1 > span {
   font-weight: 500;
   color: var(--muted);
 }
-.google-g {
-  font-weight: 750;
-  color: #879774;
-  font-size: 20px;
+.provider-logo {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+.google-logo {
+  width: 22px;
+  height: 22px;
 }
 .outlook-logo {
-  color: #7897a3;
-  font-size: 25px;
+  width: 25px;
+  height: 25px;
 }
 .icloud-logo {
-  font-size: 26px;
-  color: #93a7b8;
+  width: 27px;
+  height: 27px;
 }
 .yahoo-word {
   font-weight: 750;
   font-size: 22px;
   letter-spacing: -1.3px;
 }
+.yahoo-word > span {
+  color: #6001d2;
+}
 .fastmail-word {
-  font-style: italic;
   font-weight: 700;
   letter-spacing: -1px;
+}
+.fastmail-mark {
+  display: grid;
+  grid-template-columns: repeat(2, 7px);
+  gap: 2px;
+  transform: rotate(-12deg);
+}
+.fastmail-mark i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: #e84b9b;
+}
+.fastmail-mark i:nth-child(2) {
+  background: #7549e8;
+}
+.fastmail-mark i:nth-child(3) {
+  background: #249fe6;
+}
+.fastmail-mark i:nth-child(4) {
+  background: #46bd85;
+}
+html[data-theme="dark"] .provider-word {
+  color: #e2e4eb;
+}
+html[data-theme="dark"] .yahoo-word > span {
+  color: #b68aff;
 }
 .compatibility-more {
   font-size: 10px;
@@ -1328,29 +1461,35 @@ html[data-theme="dark"] .status-badge.review {
   min-height: 100dvh;
   display: flex;
   justify-content: center;
-  background: var(--bg);
+  background:
+    radial-gradient(
+      ellipse at 50% 42%,
+      color-mix(in srgb, var(--primary) 7%, transparent),
+      transparent 48%
+    ),
+    var(--bg);
 }
 .auth-main {
-  width: min(540px, 100%);
+  width: min(600px, 100%);
   padding: 30px 40px 22px;
   display: flex;
   flex-direction: column;
 }
 .auth-main > header {
-  width: min(420px, 100%);
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 .auth-form-wrap {
-  width: min(420px, 100%);
+  width: 100%;
   margin: auto 0;
-  padding: 30px 0;
+  padding: 20px 0;
 }
 .auth-back {
   color: var(--muted);
   font-size: 11px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 .auth-form-wrap h1 {
   font-family: var(--serif);
@@ -1358,18 +1497,31 @@ html[data-theme="dark"] .status-badge.review {
   font-weight: 400;
   letter-spacing: -1.3px;
   line-height: 1.1;
-  margin-top: 15px;
+  margin: 0;
 }
 .auth-form-wrap > p {
   font-size: 12px;
   line-height: 1.8;
   color: var(--muted);
-  margin-top: 17px;
+  margin-top: 8px;
+}
+.auth-panel {
+  margin-top: 18px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--primary));
+  box-shadow: 0 18px 55px #080b1414;
+}
+html[data-theme="dark"] .auth-panel {
+  border-color: #ffffff18;
+  background: linear-gradient(145deg, #20232b, #1b1e25 68%);
+  box-shadow: 0 22px 65px #00000035;
 }
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 19px;
+  gap: 15px;
 }
 .auth-form .MuiInputBase-root {
   font-size: 13px;
@@ -1403,7 +1555,7 @@ html[data-theme="dark"] .status-badge.review {
   text-decoration: underline;
 }
 .google-auth.MuiButton-root {
-  margin-top: 26px;
+  margin-top: 0;
   min-height: 54px;
   color: #3c4043;
   border-color: #dadce0;
@@ -1429,7 +1581,7 @@ html[data-theme="dark"] .status-badge.review {
   gap: 15px;
   color: var(--muted);
   font-size: 10px;
-  margin: 22px 0;
+  margin: 19px 0;
 }
 .auth-divider span {
   flex: 1;
@@ -1452,8 +1604,8 @@ html[data-theme="dark"] .status-badge.review {
   color: var(--ink);
   margin-top: -9px;
 }
-.auth-form-wrap > .auth-alternate {
-  margin-top: 23px;
+.auth-form-wrap .auth-alternate {
+  margin-top: 18px;
   text-align: center;
   font-size: 11px;
 }
@@ -1462,10 +1614,10 @@ html[data-theme="dark"] .status-badge.review {
   color: var(--ink);
   margin-left: 3px;
 }
-.auth-form-wrap > .auth-terms {
+.auth-form-wrap .auth-terms {
   font-size: 10px;
   line-height: 1.8;
-  margin-top: 20px;
+  margin: 15px 0 0;
   text-align: center;
 }
 .auth-terms a {
@@ -3845,7 +3997,7 @@ html[data-theme="dark"] .attention-icon {
     display: none;
   }
   .auth-form-wrap {
-    max-width: 350px;
+    max-width: none;
   }
   .auth-form-wrap h1 {
     font-size: 38px;
@@ -4354,14 +4506,17 @@ html[data-theme="dark"] .attention-icon {
     min-height: 100dvh;
   }
   .auth-form-wrap {
-    max-width: 400px;
-    padding: 34px 0;
+    max-width: none;
+    padding: 22px 0;
+  }
+  .auth-panel {
+    padding: 20px;
   }
   .auth-form-wrap h1 {
-    font-size: 46px;
+    font-size: 40px;
   }
   .auth-back {
-    margin-bottom: 34px;
+    margin-bottom: 22px;
   }
   .auth-main > footer {
     font-size: 9px;
@@ -5000,10 +5155,11 @@ html[data-theme="dark"] .attention-icon {
     padding: 23px 23px 20px;
   }
   .auth-form-wrap h1 {
-    font-size: 42px;
+    font-size: 36px;
   }
-  .auth-form-wrap .eyebrow {
-    font-size: 8px;
+  .auth-panel {
+    padding: 17px;
+    border-radius: 13px;
   }
   .auth-form-wrap > p {
     font-size: 12px;

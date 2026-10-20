@@ -1,7 +1,7 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import type { Transaction } from "firebase-admin/firestore";
 import { AppError, appURL, db, env, hash, userRef } from "./core";
-import { statusLabels, type Status } from "../domain";
+import type { Status } from "../domain";
 
 const telegramApi = (method: string) =>
   `https://api.telegram.org/bot${env("TELEGRAM_BOT_TOKEN")}/${method}`;
@@ -25,10 +25,9 @@ export function telegramConfigured() {
 }
 
 export function telegramLocalPollingEnabled() {
-  if (process.env.NODE_ENV !== "development") return false;
   try {
     const host = new URL(appURL()).hostname;
-    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+    return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
   } catch {
     return false;
   }
@@ -262,6 +261,44 @@ export function queueTelegramNotification(
   );
 }
 
+export function formatTelegramNotification(data: {
+  company?: unknown;
+  role?: unknown;
+  status?: unknown;
+  summary?: unknown;
+}) {
+  const status = data.status as Status;
+  const labels: Record<Status, string> = {
+    received: "🔵 APPLICATION RECEIVED",
+    interview: "🟣 MOVING FORWARD · INTERVIEW",
+    next_step: "🟣 MOVING FORWARD · NEXT STEP",
+    offer: "🟢 OFFER RECEIVED",
+    rejected: "🔴 REJECTION",
+    review: "🟡 NEEDS A QUICK REVIEW",
+  };
+  const heading = labels[status] || "🟡 NEW JOB REPLY";
+  const company = String(data.company || "Unknown company");
+  const role = String(data.role || "");
+  const summary = String(data.summary || "A new reply was added to your applications.").slice(
+    0,
+    1200,
+  );
+
+  return [
+    heading,
+    "━━━━━━━━━━━━━━━━",
+    `🏢 ${company}`,
+    role ? `💼 ${role}` : "",
+    "",
+    "📝 WHAT IT SAYS",
+    summary,
+    "",
+    `↗ Open your applications: ${appURL()}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export async function drainTelegramOutbox(limit = 20) {
   if (!telegramConfigured()) return { sent: 0 };
   const due = await db()
@@ -287,17 +324,7 @@ export async function drainTelegramOutbox(limit = 20) {
     });
     if (!claimed) continue;
     const data = claimed.data;
-    const body = [
-      `New job reply · ${statusLabels[data.status as Status] || "Needs review"}`,
-      String(data.company || "Unknown company"),
-      data.role ? `Role: ${data.role}` : "",
-      "",
-      String(data.summary || "A new reply was added to your applications.").slice(0, 1200),
-      "",
-      appURL(),
-    ]
-      .filter(Boolean)
-      .join("\n");
+    const body = formatTelegramNotification(data);
     try {
       await sendMessage(claimed.chatId, body);
       await item.ref.delete();

@@ -76,8 +76,8 @@ describe("classification boundary", () => {
 });
 describe("search and export", () => {
   const items = createDemoApplications();
-  it("searches Persian company names and German replies", () => {
-    expect(filterApplications(items, { ...filters, search: "تپسی" })).toHaveLength(1);
+  it("searches European company names and German replies", () => {
+    expect(filterApplications(items, { ...filters, search: "Revolut" })).toHaveLength(1);
     expect(filterApplications(items, { ...filters, search: "Bewerbung" }).length).toBeGreaterThan(
       0,
     );
@@ -87,7 +87,7 @@ describe("search and export", () => {
     expect(
       filterApplications(items, {
         ...filters,
-        language: "fa",
+        language: "en",
         status: "interview",
         dateFrom: a.receivedAt.slice(0, 10),
         dateTo: a.receivedAt.slice(0, 10),

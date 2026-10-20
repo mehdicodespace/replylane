@@ -16,7 +16,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(()=>{try{const p=JSON.parse(localStorage.getItem("replylane-preferences")||"{}");const t=p?.state?.theme==="dark"?"dark":"light";document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch{document.documentElement.dataset.theme="light";document.documentElement.style.colorScheme="light"}})()`,
+            __html: `(()=>{try{const p=JSON.parse(localStorage.getItem("replylane-preferences")||"{}");const t=p?.state?.theme==="light"?"light":"dark";document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t}catch{document.documentElement.dataset.theme="dark";document.documentElement.style.colorScheme="dark"}})()`,
           }}
         />
       </head>

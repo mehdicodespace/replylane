@@ -15,7 +15,7 @@ import {
   sendEmailVerification,
   updateProfile,
 } from "firebase/auth";
-import { ArrowLeft, ArrowUpRight, ShieldCheck, Eye, EyeOff, Check } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Eye, EyeOff, Check } from "lucide-react";
 import { clientAuth, firebaseConfigured } from "@/lib/firebase-client";
 import { Brand, ThemeToggle } from "./brand";
 import { useAuth } from "./providers";
@@ -56,10 +56,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
   });
   const title =
     mode === "sign-up"
-      ? "A fresh start,\nwith a little clarity."
+      ? "Create your workspace."
       : mode === "forgot-password"
-        ? "Let’s get you\nback in."
-        : "Good to have\nyou back.";
+        ? "Reset your password."
+        : "Welcome back.";
   if (mode !== "forgot-password" && (authLoading || user)) {
     return (
       <main className="auth-page">
@@ -154,27 +154,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
             <ArrowLeft size={16} />
             {mode === "forgot-password" ? "Back to sign in" : "Back to home"}
           </Link>
-          <span className="eyebrow">
-            {mode === "sign-up"
-              ? "YOUR NEXT CHAPTER STARTS HERE"
-              : mode === "forgot-password"
-                ? "ONE LESS THING TO WORRY ABOUT"
-                : "YOUR WORKSPACE IS WAITING"}
-          </span>
-          <h1>
-            {title.split("\n").map((line, i) => (
-              <span key={i}>
-                {line}
-                <br />
-              </span>
-            ))}
-          </h1>
+          <h1>{title}</h1>
           <p>
             {mode === "sign-up"
-              ? "A calmer home for your applications, interviews, and what’s next."
+              ? "Keep application replies and next steps together."
               : mode === "forgot-password"
-                ? "Enter your email and we’ll send you a password reset link."
-                : "Sign in to see where things stand — and where you’re headed."}
+                ? "We’ll email you a reset link."
+                : "Pick up where you left off."}
           </p>
           {!firebaseConfigured && (
             <Alert severity="info" className="auth-alert">
@@ -192,132 +178,139 @@ export function AuthForm({ mode }: { mode: Mode }) {
               {notice}
             </Alert>
           )}
-          {success ? (
-            <div className="reset-success" role="status">
-              <span>
-                <Check size={24} />
-              </span>
-              <h3>Check your inbox.</h3>
-              <p>
-                If an account exists for that address, a reset link is on its way. Check your spam
-                folder too.
-              </p>
-              <Link href="/sign-in" className="button button-dark">
-                Back to sign in <ArrowRightIcon />
-              </Link>
-            </div>
-          ) : (
-            <>
-              {mode !== "forgot-password" && (
-                <>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    onClick={google}
-                    disabled={busy || !firebaseConfigured}
-                    className="google-auth"
-                  >
-                    <GoogleMark /> Continue with Google
-                  </Button>
-                  <div className="auth-divider">
-                    <span />
-                    or use your email
-                    <span />
-                  </div>
-                </>
-              )}
-              <form onSubmit={handleSubmit(submit)} noValidate className="auth-form">
-                {mode === "sign-up" && (
-                  <TextField
-                    label="Your name"
-                    autoComplete="name"
-                    {...register("name")}
-                    error={!!errors.name}
-                    helperText={errors.name?.message}
-                    fullWidth
-                  />
-                )}
-                <TextField
-                  label="Email address"
-                  type="email"
-                  autoComplete="email"
-                  {...register("email")}
-                  error={!!errors.email}
-                  helperText={errors.email?.message}
-                  fullWidth
-                />
+          <section
+            className="auth-panel"
+            aria-label={
+              mode === "sign-up"
+                ? "Create your account"
+                : mode === "forgot-password"
+                  ? "Reset your password"
+                  : "Sign in"
+            }
+          >
+            {success ? (
+              <div className="reset-success" role="status">
+                <span>
+                  <Check size={24} />
+                </span>
+                <h3>Check your inbox.</h3>
+                <p>
+                  If an account exists for that address, a reset link is on its way. Check your spam
+                  folder too.
+                </p>
+                <Link href="/sign-in" className="button button-dark">
+                  Back to sign in <ArrowRightIcon />
+                </Link>
+              </div>
+            ) : (
+              <>
                 {mode !== "forgot-password" && (
-                  <div className="password-field">
+                  <>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={google}
+                      disabled={busy || !firebaseConfigured}
+                      className="google-auth"
+                    >
+                      <GoogleMark /> Continue with Google
+                    </Button>
+                    <div className="auth-divider">
+                      <span />
+                      or use your email
+                      <span />
+                    </div>
+                  </>
+                )}
+                <form onSubmit={handleSubmit(submit)} noValidate className="auth-form">
+                  {mode === "sign-up" && (
                     <TextField
-                      label="Password"
-                      type={visible ? "text" : "password"}
-                      autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-                      {...register("password")}
-                      error={!!errors.password}
-                      helperText={
-                        errors.password?.message ||
-                        (mode === "sign-up"
-                          ? "At least 10 characters. Make it your own."
-                          : undefined)
-                      }
+                      label="Your name"
+                      autoComplete="name"
+                      {...register("name")}
+                      error={!!errors.name}
+                      helperText={errors.name?.message}
                       fullWidth
                     />
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label={visible ? "Hide password" : "Show password"}
-                      onClick={() => setVisible(!visible)}
-                    >
-                      {visible ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                )}
-                {mode === "sign-in" && (
-                  <Link className="forgot-link" href="/forgot-password">
-                    Forgot password?
-                  </Link>
-                )}
-                <Button
-                  variant="contained"
-                  type="submit"
-                  fullWidth
-                  disabled={busy || !firebaseConfigured}
-                  endIcon={
-                    busy ? (
-                      <CircularProgress size={16} color="inherit" />
-                    ) : (
-                      <ArrowUpRight size={18} />
-                    )
-                  }
-                >
-                  {mode === "sign-up"
-                    ? "Create your workspace"
-                    : mode === "forgot-password"
-                      ? "Send reset link"
-                      : "Sign in"}
-                </Button>
-              </form>
-            </>
-          )}
-          {mode !== "forgot-password" && (
-            <p className="auth-alternate">
-              {mode === "sign-in" ? "New to Replylane?" : "Already have a workspace?"}{" "}
-              <Link href={mode === "sign-in" ? "/sign-up" : "/sign-in"}>
-                {mode === "sign-in" ? "Get started" : "Sign in"}
-              </Link>
-            </p>
-          )}
-          {mode === "sign-up" && (
-            <p className="auth-terms">
-              By creating an account, you agree to our <Link href="/terms">Terms</Link> and{" "}
-              <Link href="/privacy">Privacy notice</Link>. Connecting an inbox is a separate,
-              optional step.
-            </p>
-          )}
+                  )}
+                  <TextField
+                    label="Email address"
+                    type="email"
+                    autoComplete="email"
+                    {...register("email")}
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                    fullWidth
+                  />
+                  {mode !== "forgot-password" && (
+                    <div className="password-field">
+                      <TextField
+                        label="Password"
+                        type={visible ? "text" : "password"}
+                        autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+                        {...register("password")}
+                        error={!!errors.password}
+                        helperText={
+                          errors.password?.message ||
+                          (mode === "sign-up"
+                            ? "At least 10 characters. Make it your own."
+                            : undefined)
+                        }
+                        fullWidth
+                      />
+                      <button
+                        type="button"
+                        className="icon-button"
+                        aria-label={visible ? "Hide password" : "Show password"}
+                        onClick={() => setVisible(!visible)}
+                      >
+                        {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  )}
+                  {mode === "sign-in" && (
+                    <Link className="forgot-link" href="/forgot-password">
+                      Forgot password?
+                    </Link>
+                  )}
+                  <Button
+                    variant="contained"
+                    type="submit"
+                    fullWidth
+                    disabled={busy || !firebaseConfigured}
+                    endIcon={
+                      busy ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : (
+                        <ArrowUpRight size={18} />
+                      )
+                    }
+                  >
+                    {mode === "sign-up"
+                      ? "Create your workspace"
+                      : mode === "forgot-password"
+                        ? "Send reset link"
+                        : "Sign in"}
+                  </Button>
+                </form>
+              </>
+            )}
+            {mode !== "forgot-password" && (
+              <p className="auth-alternate">
+                {mode === "sign-in" ? "New to Replylane?" : "Already have a workspace?"}{" "}
+                <Link href={mode === "sign-in" ? "/sign-up" : "/sign-in"}>
+                  {mode === "sign-in" ? "Get started" : "Sign in"}
+                </Link>
+              </p>
+            )}
+            {mode === "sign-up" && (
+              <p className="auth-terms">
+                By continuing, you agree to our <Link href="/terms">Terms</Link> and{" "}
+                <Link href="/privacy">Privacy notice</Link>. Inbox access is optional.
+              </p>
+            )}
+          </section>
         </div>
-        <footer>
-          <ShieldCheck size={15} /> Your next opportunity deserves a little peace of mind.
-        </footer>
       </div>
     </main>
   );

@@ -13,7 +13,7 @@ interface UIState {
 export const useUI = create<UIState>()(
   persist(
     (set) => ({
-      theme: "light",
+      theme: "dark",
       view: "board",
       setTheme: (theme) => set({ theme }),
       setView: (view) => set({ view }),
