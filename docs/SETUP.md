@@ -161,6 +161,8 @@ When importing environment variables, mark credentials such as API keys, private
 
 Keep live processing disabled in untrusted deploy previews. Do not expose production service-account keys or mailbox secrets to fork builds. Changes to browser variables need a rebuild.
 
+The pinned `jwks-rsa` dependency has a small compatibility patch applied by `scripts/patch-server-dependencies.cjs`: its signing-key and Passport helpers load `jose` with dynamic imports. This lets Firebase Admin load on function runtimes that disable `require(esm)`. Installation and the prebuild step apply the patch automatically and fail if the expected source changes; no experimental `NODE_OPTIONS` flag is required. Keep the patch and regression test until the upstream dependency supports this runtime.
+
 In production, `sync-mail` runs every minute and invokes the protected `sync-mail-background` function. That worker processes up to twelve messages per invocation, with a four-minute work window, provider pacing, and mailbox leases. The workspace also advances due work while open. The provider allowance may slow or stop a large historical import. Confirm background/scheduled function availability and hosting credit costs on your Netlify plan. The worker logs a generic failure if dispatch or processing cannot finish; inspect connection status and deployment logs if it stops progressing.
 
 After deployment, test the real callback and verify a scheduled sync while the browser is closed. A successful local build does not verify those external integrations.
