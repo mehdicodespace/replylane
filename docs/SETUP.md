@@ -157,6 +157,8 @@ Functions directory: netlify/functions
 
 Use Netlify’s current Next.js adapter. Do not configure a static export: this app has authenticated server routes. Add the `NEXT_PUBLIC_*` Firebase values to the build environment and keep the other values server-only. Set the final `APP_URL`, OAuth callbacks, and Firebase authorized domain to the actual deployed URL.
 
+When importing environment variables, mark credentials such as API keys, private keys, tokens, client secrets, `TOKEN_ENCRYPTION_KEY`, and `CRON_SECRET` as secret values. Model names, numeric limits, the public site URL, and the Telegram bot username are ordinary configuration. The checked-in `SECRETS_SCAN_OMIT_KEYS` list excludes five such non-secret values that also appear in documentation or source defaults. Secret scanning stays enabled for credentials. For a reported non-secret value, use a narrowly scoped key exclusion rather than disabling scanning or excluding entire build directories.
+
 Keep live processing disabled in untrusted deploy previews. Do not expose production service-account keys or mailbox secrets to fork builds. Changes to browser variables need a rebuild.
 
 In production, `sync-mail` runs every minute and invokes the protected `sync-mail-background` function. That worker processes up to twelve messages per invocation, with a four-minute work window, provider pacing, and mailbox leases. The workspace also advances due work while open. The provider allowance may slow or stop a large historical import. Confirm background/scheduled function availability and hosting credit costs on your Netlify plan. The worker logs a generic failure if dispatch or processing cannot finish; inspect connection status and deployment logs if it stops progressing.

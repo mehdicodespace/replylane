@@ -5,6 +5,9 @@
 [build.environment]
   NODE_VERSION = "22"
   NEXT_TELEMETRY_DISABLED = "1"
+  # Public configuration values may also appear in examples and source defaults.
+  # Keep tokens, private keys, and client secrets covered by secret scanning.
+  SECRETS_SCAN_OMIT_KEYS = "AI_DAILY_TOKEN_BUDGET,APP_URL,GROQ_MODEL,AI_MIN_INTERVAL_MS,TELEGRAM_BOT_USERNAME"
 
 [functions]
   directory = "netlify/functions"
