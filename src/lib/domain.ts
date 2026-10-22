@@ -48,6 +48,12 @@ export const reviewLane: { id: string; label: string; statuses: Status[]; captio
   statuses: ["review"],
   caption: "A little human judgment",
 };
+export const receivedLane: { id: string; label: string; statuses: Status[]; caption: string } = {
+  id: "received",
+  label: "Received",
+  statuses: ["received"],
+  caption: "Application confirmations and receipt updates",
+};
 export const lanes: { id: string; label: string; statuses: Status[]; caption: string }[] = [
   {
     id: "progress",
@@ -182,6 +188,7 @@ export function filterApplications(items: Application[], f: Filters) {
       if (f.tab === "archive" ? !a.archived : a.archived) return false;
       if (f.tab === "starred" && !a.starred) return false;
       if (f.tab === "review" && a.status !== "review") return false;
+      if (f.tab === "received" && a.status !== "received") return false;
       if (!["all", "review", "trash"].includes(f.tab) && a.status === "review") return false;
       if (f.tab === "rejected" && a.status !== "rejected") return false;
       if (f.tab === "attention" && !["interview", "next_step", "offer"].includes(a.status))

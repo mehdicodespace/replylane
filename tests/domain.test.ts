@@ -146,6 +146,18 @@ describe("search and export", () => {
     expect(workspacePath("applications", "review")).toBe("/app/review");
     expect(lanes.map((lane) => lane.label)).toEqual(["Moving forward", "Offers", "Rejected"]);
   });
+  it("accounts for every active reply across the status tabs, including received", () => {
+    const all = filterApplications(items, filters);
+    const groups = ["attention", "review", "rejected", "received"].flatMap((tab) =>
+      filterApplications(items, { ...filters, tab }),
+    );
+    expect(groups).toHaveLength(all.length);
+    expect(new Set(groups.map((a) => a.id))).toEqual(new Set(all.map((a) => a.id)));
+    const received = filterApplications(items, { ...filters, tab: "received" });
+    expect(received.length).toBeGreaterThan(0);
+    expect(received.every((a) => a.status === "received")).toBe(true);
+    expect(workspacePath("applications", "received")).toBe("/app/received");
+  });
   it("sorts oldest first and missing deadlines last", () => {
     const byDate = filterApplications(items, { ...filters, sort: "oldest" });
     expect(byDate[0].receivedAt <= byDate.at(-1)!.receivedAt).toBe(true);

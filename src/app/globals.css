@@ -2229,7 +2229,11 @@ html[data-theme="dark"] .attention-icon {
   order: 3;
 }
 .application-tabs > button[data-tab="trash"] {
+  order: 5;
+}
+.application-tabs > button[data-tab="received"] {
   order: 4;
+  --tab-color: #9ba8b8;
 }
 .application-tabs
   > button[data-tab]:not([data-tab="trash"]):not([data-tab="starred"]):not([data-tab="archive"]) {

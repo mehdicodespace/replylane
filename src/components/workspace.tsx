@@ -45,6 +45,7 @@ import {
   statusLabels,
   displayDate,
   reviewLane,
+  receivedLane,
 } from "@/lib/domain";
 import { ApplicationDetail } from "./application-detail";
 import { Connections } from "./connections";
@@ -94,9 +95,11 @@ export function Workspace({
             ? "review"
             : route === "rejected"
               ? "rejected"
-              : route === "trash"
-                ? "trash"
-                : "all";
+              : route === "received"
+                ? "received"
+                : route === "trash"
+                  ? "trash"
+                  : "all";
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [language, setLanguage] = useState("all");
@@ -265,7 +268,7 @@ export function Workspace({
     [applications, search, status, language, sort, tab, dateFrom, dateTo, connectionId],
   );
   const boardApplications =
-    view === "board" && tab !== "trash"
+    view === "board" && tab === "all"
       ? filtered.filter((application) => application.status !== "received")
       : filtered;
   const acknowledgmentsOnly =
@@ -316,25 +319,30 @@ export function Workspace({
               ? "Rejected applications"
               : tab === "trash"
                 ? "Trash"
-                : "Applications";
+                : tab === "received"
+                  ? "Received applications"
+                  : "Applications";
   const nextSteps = active.filter((a) => ["interview", "next_step"].includes(a.status));
   const offers = active.filter((a) => a.status === "offer");
   const review = active.filter((a) => a.status === "review");
+  const received = active.filter((a) => a.status === "received");
   const attentionStatuses = ["interview", "next_step", "offer"];
   const visibleLanes =
     tab === "trash"
       ? [{ id: "trash", label: "Trash", statuses: [...statuses], caption: "Items you moved here" }]
       : tab === "review"
         ? [reviewLane]
-        : tab === "all"
-          ? [...lanes, reviewLane]
-          : tab === "attention"
-            ? lanes.filter((lane) =>
-                lane.statuses.some((status) => attentionStatuses.includes(status)),
-              )
-            : tab === "rejected"
-              ? lanes.filter((lane) => lane.id === "rejected")
-              : lanes;
+        : tab === "received"
+          ? [receivedLane]
+          : tab === "all"
+            ? [...lanes, reviewLane]
+            : tab === "attention"
+              ? lanes.filter((lane) =>
+                  lane.statuses.some((status) => attentionStatuses.includes(status)),
+                )
+              : tab === "rejected"
+                ? lanes.filter((lane) => lane.id === "rejected")
+                : [...lanes, receivedLane];
   if (demo ? !clientReady : authLoading || !user)
     return (
       <div className="workspace-loading">
@@ -612,7 +620,11 @@ export function Workspace({
                       ? "Loading your applications…"
                       : live.isError && !live.data
                         ? "Your applications couldn’t load."
-                        : `${filtered.length} application replies · select a company for details`}
+                        : tab === "received"
+                          ? `${filtered.length} confirmations and receipt updates · no next step yet`
+                          : view === "board" && boardApplications.length < filtered.length
+                            ? `${filtered.length} application replies · ${boardApplications.length} on the board · ${filtered.length - boardApplications.length} in Received`
+                            : `${filtered.length} application replies · select a company for details`}
                   </p>
                 </div>
                 <div className="applications-title-actions">
@@ -721,6 +733,19 @@ export function Workspace({
                       >
                         Rejected
                         <span>{active.filter((a) => a.status === "rejected").length}</span>
+                      </button>
+                    )}
+                    {!["starred", "archive"].includes(tab) && (
+                      <button
+                        role="tab"
+                        aria-selected={tab === "received"}
+                        className={tab === "received" ? "selected" : ""}
+                        data-tab="received"
+                        onClick={() => setTab("received")}
+                        title="Application confirmations and receipt updates"
+                      >
+                        Received
+                        <span>{received.length}</span>
                       </button>
                     )}
                   </div>
@@ -932,14 +957,14 @@ export function Workspace({
                       {applications.length === 0
                         ? "Your next chapter starts with a connection."
                         : acknowledgmentsOnly
-                          ? "Routine acknowledgments are tucked away."
+                          ? "Your applications have been received."
                           : "A little quiet here."}
                     </h3>
                     <p>
                       {applications.length === 0
                         ? "Connect your email to bring your application replies into view."
                         : acknowledgmentsOnly
-                          ? "You can still find these replies in List view when you need them."
+                          ? "These confirmations are in Received. Interviews, offers, and other updates will appear on your board."
                           : "No applications match this view. Try a different search or filter."}
                     </p>
                     <button
@@ -948,14 +973,14 @@ export function Workspace({
                         applications.length === 0
                           ? go("connections")
                           : acknowledgmentsOnly
-                            ? setView("list")
+                            ? setTab("received")
                             : (resetFilters(), setTab("all"))
                       }
                     >
                       {applications.length === 0
                         ? "Connect an inbox"
                         : acknowledgmentsOnly
-                          ? "View list"
+                          ? "View received applications"
                           : "Show all applications"}
                       <ArrowUpRight size={16} />
                     </button>
@@ -965,10 +990,12 @@ export function Workspace({
                     <div
                       className="kanban-board"
                       style={{
-                        gridTemplateColumns: ["rejected", "review", "trash"].includes(tab)
+                        gridTemplateColumns: ["rejected", "review", "trash", "received"].includes(
+                          tab,
+                        )
                           ? "minmax(min(100%, 420px), 420px)"
                           : `repeat(${visibleLanes.length}, minmax(168px, 1fr))`,
-                        minWidth: ["rejected", "review", "trash"].includes(tab)
+                        minWidth: ["rejected", "review", "trash", "received"].includes(tab)
                           ? 0
                           : `${visibleLanes.length * 168 + (visibleLanes.length - 1) * 12}px`,
                       }}
@@ -1106,9 +1133,14 @@ export function Workspace({
                       ? "application"
                       : "applications"}{" "}
                     in view<span className="dot-separator">·</span>
-                    {view === "board" && boardApplications.length < filtered.length
-                      ? `${filtered.length - boardApplications.length} acknowledgments shown in List view · `
-                      : ""}
+                    {view === "board" && boardApplications.length < filtered.length && (
+                      <>
+                        <button className="inline-link" onClick={() => setTab("received")}>
+                          {filtered.length - boardApplications.length} in Received
+                        </button>{" "}
+                        ·{" "}
+                      </>
+                    )}
                     {demo ? "Sample data" : "Read-only connections"}
                   </span>
                   <span>
