@@ -1,6 +1,6 @@
 "use client";
 import { getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, signOut } from "firebase/auth";
 
 export const firebaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
@@ -24,7 +24,22 @@ export function clientAuth() {
   return getAuth(app);
 }
 export async function api<T>(url: string, init: RequestInit = {}): Promise<T> {
-  const token = await clientAuth().currentUser?.getIdToken();
+  const auth = clientAuth();
+  let token: string | undefined;
+  try {
+    token = await auth.currentUser?.getIdToken();
+  } catch (error) {
+    const code = (error as { code?: string })?.code;
+    if (
+      ["auth/user-token-expired", "auth/invalid-user-token", "auth/user-disabled"].includes(
+        code || "",
+      )
+    ) {
+      await signOut(auth).catch(() => undefined);
+      throw new Error("Your session has expired. Please sign in again.");
+    }
+    throw error;
+  }
   if (!token) throw new Error("Please sign in to continue.");
   const result = await fetch(url, {
     ...init,
@@ -34,7 +49,11 @@ export async function api<T>(url: string, init: RequestInit = {}): Promise<T> {
       ...init.headers,
     },
   });
-  const body = await result.json();
+  const body = await result.json().catch(() => ({}));
+  if (result.status === 401) {
+    await signOut(auth).catch(() => undefined);
+    throw new Error(body.error || "Your session has expired. Please sign in again.");
+  }
   if (!result.ok) throw new Error(body.error || "That didn't work. Please try again.");
   return body as T;
 }

@@ -165,7 +165,7 @@ export default function Landing() {
             ) : (
               <>
                 <Link className="nav-login" href="/sign-in">
-                  Log in
+                  Sign in
                 </Link>
                 <Link className="button button-dark button-small" href="/sign-up">
                   Get started <ArrowUpRight size={16} />

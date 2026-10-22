@@ -22,7 +22,7 @@ export function LegalHeader() {
             ) : (
               <>
                 <Link className="nav-login" href="/sign-in">
-                  Log in
+                  Sign in
                 </Link>
                 <Link className="button button-dark button-small" href="/sign-up">
                   Create account
