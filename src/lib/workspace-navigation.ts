@@ -10,6 +10,12 @@ export const workspaceRoutes = [
   "settings",
 ] as const;
 export type WorkspaceRoute = (typeof workspaceRoutes)[number];
+export function workspaceRouteFromPath(pathname: string, demo = false): WorkspaceRoute | null {
+  const prefix = demo ? "/demo/" : "/app/";
+  if (!pathname.startsWith(prefix)) return null;
+  const route = pathname.slice(prefix.length).replace(/\/$/, "") as WorkspaceRoute;
+  return workspaceRoutes.includes(route) ? route : null;
+}
 export function workspacePath(section: string, tab = "all", demo = false) {
   const route =
     section === "connections"

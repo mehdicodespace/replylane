@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Snackbar, Skeleton, Button, Drawer, useMediaQuery } from "@mui/material";
@@ -49,7 +49,11 @@ import {
 import { ApplicationDetail } from "./application-detail";
 import { Connections } from "./connections";
 import { Settings } from "./settings";
-import { workspacePath, type WorkspaceRoute } from "@/lib/workspace-navigation";
+import {
+  workspacePath,
+  workspaceRouteFromPath,
+  type WorkspaceRoute,
+} from "@/lib/workspace-navigation";
 
 interface WorkspaceData {
   applications: Application[];
@@ -64,13 +68,15 @@ interface TelegramStatus {
 }
 export function Workspace({
   demo = false,
-  route = "applications",
+  route: initialRoute = "applications",
 }: {
   demo?: boolean;
   route?: WorkspaceRoute;
 }) {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const route = workspaceRouteFromPath(pathname, demo) ?? initialRoute;
   const params = useSearchParams();
   const queryClient = useQueryClient();
   const demoState = useDemo();
@@ -268,7 +274,11 @@ export function Workspace({
     boardApplications.length === 0 &&
     filtered.every((application) => application.status === "received");
   function go(s: string, t = "all") {
-    router.push(workspacePath(s, t, demo));
+    // Every workspace view uses the same loaded data. Updating history avoids
+    // a server round trip and keeps the query observer and sync worker mounted.
+    const href = workspacePath(s, t, demo);
+    if (window.location.pathname !== href) window.history.pushState(null, "", href);
+    setSelected(null);
     setMobileNav(false);
   }
   function setTab(t: string) {
