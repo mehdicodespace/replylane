@@ -2,6 +2,8 @@
 
 Organize job application emails into a clear, searchable pipeline.
 
+**Live demo:** [https://replylane.netlify.app/](https://replylane.netlify.app/)
+
 Replylane finds replies from employers, summarizes what happened, and keeps each application’s latest status and next step in one workspace. Connect an inbox, review the results, and get an optional Telegram alert when a new reply is processed.
 
 ## Preview
