@@ -5581,8 +5581,9 @@ html[data-theme="dark"] .attention-icon {
 }
 .compact-card {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
   position: relative;
   min-height: 78px;
   padding: 10px 8px 10px 12px;
@@ -5603,7 +5604,6 @@ html[data-theme="dark"] .attention-icon {
   align-items: center;
   gap: 9px;
   padding: 0;
-  flex: 1;
   min-width: 0;
   text-align: left;
 }
@@ -5646,9 +5646,18 @@ html[data-theme="dark"] .attention-icon {
 .application-list-row .icon-button.is-unread {
   color: var(--muted);
 }
-.compact-card-copy time {
-  display: block;
-  margin-top: 3px;
+.compact-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.compact-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.compact-card-meta time {
   font-size: 11px;
   color: var(--muted);
 }

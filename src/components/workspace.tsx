@@ -1243,80 +1243,84 @@ function ApplicationCard({
         aria-label={`View details for ${a.company}`}
         title={`${a.company} · ${a.role}`}
       >
-        {!a.isRead && <span className="unread-indicator" aria-label="Unread" title="Unread" />}
         <span className="compact-card-copy">
           <strong dir="auto">{a.company}</strong>
+        </span>
+      </button>
+      <div className="compact-card-footer">
+        <div className="compact-card-meta">
+          {!a.isRead && <span className="unread-indicator" aria-label="Unread" title="Unread" />}
           <time dateTime={a.receivedAt}>
             {new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(
               new Date(a.receivedAt),
             )}
           </time>
-        </span>
-      </button>
-      <div className="compact-card-actions">
-        <button
-          className={`icon-button read-button ${a.isRead ? "" : "is-unread"}`}
-          aria-label={`${a.isRead ? "Mark unread" : "Mark read"} ${a.company}`}
-          title={a.isRead ? "Mark unread" : "Mark read"}
-          disabled={!!workingAction}
-          onClick={onToggleRead}
-        >
-          {a.isRead ? <EyeOff size={14} /> : <Eye size={14} />}
-        </button>
-        <button
-          className={`icon-button star-button ${a.starred ? "is-starred" : ""}`}
-          aria-label={`${a.starred ? "Unsave" : "Save"} ${a.company}`}
-          disabled={!!workingAction}
-          onClick={onStar}
-        >
-          <Star size={14} fill={a.starred ? "currentColor" : "none"} />
-        </button>
-        {onRestore && (
+        </div>
+        <div className="compact-card-actions">
           <button
-            className="icon-button card-restore-button"
-            aria-label={`Restore ${a.company} from Trash`}
-            title="Restore from Trash"
+            className={`icon-button read-button ${a.isRead ? "" : "is-unread"}`}
+            aria-label={`${a.isRead ? "Mark unread" : "Mark read"} ${a.company}`}
+            title={a.isRead ? "Mark unread" : "Mark read"}
             disabled={!!workingAction}
-            onClick={async () => {
-              setWorkingAction("restore");
-              try {
-                await onRestore();
-              } catch {
-                // The workspace displays the request error.
-              } finally {
-                setWorkingAction(null);
+            onClick={onToggleRead}
+          >
+            {a.isRead ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+          <button
+            className={`icon-button star-button ${a.starred ? "is-starred" : ""}`}
+            aria-label={`${a.starred ? "Unsave" : "Save"} ${a.company}`}
+            disabled={!!workingAction}
+            onClick={onStar}
+          >
+            <Star size={14} fill={a.starred ? "currentColor" : "none"} />
+          </button>
+          {onRestore && (
+            <button
+              className="icon-button card-restore-button"
+              aria-label={`Restore ${a.company} from Trash`}
+              title="Restore from Trash"
+              disabled={!!workingAction}
+              onClick={async () => {
+                setWorkingAction("restore");
+                try {
+                  await onRestore();
+                } catch {
+                  // The workspace displays the request error.
+                } finally {
+                  setWorkingAction(null);
+                }
+              }}
+            >
+              {workingAction === "restore" ? (
+                <LoaderCircle className="action-spinner" size={15} />
+              ) : (
+                <ArchiveRestore size={15} />
+              )}
+            </button>
+          )}
+          {(onTrash || onPermanentDelete) && (
+            <button
+              className="icon-button card-trash-button"
+              aria-label={
+                onPermanentDelete ? `Permanently delete ${a.company}` : `Move ${a.company} to Trash`
               }
-            }}
-          >
-            {workingAction === "restore" ? (
-              <LoaderCircle className="action-spinner" size={15} />
-            ) : (
-              <ArchiveRestore size={15} />
-            )}
-          </button>
-        )}
-        {(onTrash || onPermanentDelete) && (
-          <button
-            className="icon-button card-trash-button"
-            aria-label={
-              onPermanentDelete ? `Permanently delete ${a.company}` : `Move ${a.company} to Trash`
-            }
-            aria-expanded={!!confirmAction}
-            title={onPermanentDelete ? "Delete permanently" : "Move to Trash"}
-            disabled={!!workingAction}
-            onClick={() =>
-              onPermanentDelete
-                ? setConfirmAction((value) => (value === "delete" ? null : "delete"))
-                : setConfirmAction((value) => (value === "move" ? null : "move"))
-            }
-          >
-            {workingAction === "move" || workingAction === "delete" ? (
-              <LoaderCircle className="action-spinner" size={15} />
-            ) : (
-              <Trash2 size={15} />
-            )}
-          </button>
-        )}
+              aria-expanded={!!confirmAction}
+              title={onPermanentDelete ? "Delete permanently" : "Move to Trash"}
+              disabled={!!workingAction}
+              onClick={() =>
+                onPermanentDelete
+                  ? setConfirmAction((value) => (value === "delete" ? null : "delete"))
+                  : setConfirmAction((value) => (value === "move" ? null : "move"))
+              }
+            >
+              {workingAction === "move" || workingAction === "delete" ? (
+                <LoaderCircle className="action-spinner" size={15} />
+              ) : (
+                <Trash2 size={15} />
+              )}
+            </button>
+          )}
+        </div>
       </div>
       {confirmAction === "move" && onTrash && (
         <div className="card-trash-confirm" role="group" aria-label={`Move ${a.company} to Trash?`}>
