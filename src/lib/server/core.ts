@@ -2,7 +2,6 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { createCipheriv, createDecipheriv, randomBytes, createHash } from "node:crypto";
-import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 export class AppError extends Error {
@@ -86,14 +85,14 @@ export const hash = (value: string) => createHash("sha256").update(value).digest
 export const userRef = (uid: string) => db().collection("users").doc(uid);
 export function responseError(error: unknown) {
   if (error instanceof AppError)
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return Response.json({ error: error.message }, { status: error.status });
   if (error instanceof ZodError)
-    return NextResponse.json({ error: "Please check the supplied details." }, { status: 400 });
+    return Response.json({ error: "Please check the supplied details." }, { status: 400 });
   // Never log email content, credentials, provider bodies, or raw upstream exceptions.
   console.error("Replylane request failed", {
     type: error instanceof Error ? error.name : "UnknownError",
   });
-  return NextResponse.json(
+  return Response.json(
     { error: "The service couldn't finish this request. Please try again shortly." },
     { status: 500 },
   );

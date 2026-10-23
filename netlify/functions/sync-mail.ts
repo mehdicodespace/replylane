@@ -10,6 +10,7 @@ export default async () => {
       signal: AbortSignal.timeout(15000),
     });
     if (!response.ok) throw new Error("Background dispatch failed");
+    console.info("Scheduled inbox sync dispatched to the background worker.");
   } catch {
     console.error("Scheduled mail sync could not finish; queued work is retained.");
   }

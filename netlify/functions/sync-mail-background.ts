@@ -14,8 +14,15 @@ export default async (request: Request) => {
   )
     return;
   try {
-    if (process.env.MAIL_PROCESSING_ENABLED === "true") await scheduledSync(36);
-    await drainTelegramOutbox(30);
+    const result =
+      process.env.MAIL_PROCESSING_ENABLED === "true"
+        ? await scheduledSync(36)
+        : { processed: 0 };
+    const telegram = await drainTelegramOutbox(30);
+    console.info("Background processing finished.", {
+      inboxMessagesProcessed: result.processed,
+      telegramNotificationsSent: telegram.sent,
+    });
   } catch {
     console.error("Background mail sync paused; queued work is retained.");
   }
