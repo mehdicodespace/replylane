@@ -9,6 +9,7 @@ import {
   responseError,
 } from "@/lib/server/core";
 import { syncConnection } from "@/lib/server/sync";
+import { drainTelegramOutbox } from "@/lib/server/telegram";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 export async function POST(request: Request) {
@@ -30,7 +31,13 @@ export async function POST(request: Request) {
       result = await syncConnection(id, uid, true);
       processed += result.processed;
     }
-    return NextResponse.json({ ...result, processed });
+    let telegramNotificationsSent = 0;
+    try {
+      telegramNotificationsSent = (await drainTelegramOutbox(10)).sent;
+    } catch {
+      console.error("Telegram notifications could not be drained after a manual inbox check.");
+    }
+    return NextResponse.json({ ...result, processed, telegramNotificationsSent });
   } catch (error) {
     return responseError(error);
   }

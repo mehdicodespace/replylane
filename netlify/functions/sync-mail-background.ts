@@ -21,10 +21,14 @@ export default async (request: Request) => {
     const telegram = await drainTelegramOutbox(30);
     console.info("Background processing finished.", {
       inboxMessagesProcessed: result.processed,
+      inboxConnectionsChecked: "checked" in result ? result.checked : 0,
+      inboxConnectionsFailed: "failed" in result ? result.failed : 0,
       telegramNotificationsSent: telegram.sent,
     });
-  } catch {
-    console.error("Background mail sync paused; queued work is retained.");
+  } catch (error) {
+    console.error("Background mail sync paused; queued work is retained.", {
+      type: error instanceof Error ? error.name : "UnknownError",
+    });
   }
 };
 export const config: Config = { background: true };

@@ -7,6 +7,7 @@
   --muted: #707784;
   --border: #dfe2e7;
   --primary: #5366d8;
+  --unread-dot: #8b7462;
   --accent: #e7eaff;
   --sage: #eff0f8;
   --card-shadow: 0 3px 10px #263a5210;
@@ -21,6 +22,7 @@ html[data-theme="dark"] {
   --muted: #a2a7b1;
   --border: #343941;
   --primary: #aeb8ff;
+  --unread-dot: #f1e7d8;
   --accent: #30364f;
   --sage: #292d3b;
   --card-shadow: 0 4px 14px #00000018;
@@ -5633,8 +5635,8 @@ html[data-theme="dark"] .attention-icon {
   height: 8px;
   flex: 0 0 8px;
   border-radius: 50%;
-  background: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+  background: var(--unread-dot);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--unread-dot) 16%, transparent);
 }
 .compact-card.is-unread .compact-card-copy strong,
 .application-list-row.is-unread .list-company strong {
@@ -5642,7 +5644,7 @@ html[data-theme="dark"] .attention-icon {
 }
 .compact-card .read-button.is-unread,
 .application-list-row .icon-button.is-unread {
-  color: var(--primary);
+  color: var(--muted);
 }
 .compact-card-copy time {
   display: block;

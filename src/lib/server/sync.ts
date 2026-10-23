@@ -101,7 +101,16 @@ export async function recordMail(
       provider: connection.data()?.provider,
       messageUrl: mail.messageUrl,
     });
-    if (phase === "live" && latest && owner.data()?.telegram?.chatId) {
+    // A new message can be discovered while an older history import is in progress.
+    // Notify for mail received after this mailbox was connected, regardless of which
+    // cursor found it; older backfill remains quiet.
+    const connectedAt = connection.data()?.createdAt as string | undefined;
+    const receivedAfterConnection = Boolean(connectedAt && mail.receivedAt >= connectedAt);
+    if (
+      (phase === "live" || receivedAfterConnection) &&
+      latest &&
+      owner.data()?.telegram?.chatId
+    ) {
       queueTelegramNotification(tx, uid, `${connectionId}:${mail.id}`, {
         company: classification.company,
         role: classification.role,
@@ -292,6 +301,9 @@ export async function scheduledSync(maxMessages = 1) {
   if (process.env.MAIL_PROCESSING_ENABLED !== "true") return { processed: 0 };
   // Earliest due mailbox first. The composite index is tracked in firestore.indexes.json.
   let processed = 0;
+  let checked = 0;
+  let failed = 0;
+  const checkedConnections = new Set<string>();
   const deadline = Date.now() + 4 * 60000;
   let rounds = 0;
   while (
@@ -309,14 +321,19 @@ export async function scheduledSync(maxMessages = 1) {
     if (due.empty) break;
     let progress = false;
     for (const doc of due.docs) {
+      if (checkedConnections.has(doc.id)) continue;
+      checkedConnections.add(doc.id);
       if (doc.data().status !== "connected" || doc.data().provider === "import") continue;
       try {
         const result = await syncConnection(doc.id);
+        checked++;
         processed += result.processed;
         progress = true;
       } catch (error) {
+        checked++;
+        failed++;
         if (error instanceof AppError && error.status === 429 && error.code !== "PERSONAL_BUDGET")
-          return { processed };
+          return { processed, checked, failed };
       }
       if (processed >= maxMessages || Date.now() >= deadline) break;
     }
@@ -327,5 +344,5 @@ export async function scheduledSync(maxMessages = 1) {
       if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
     }
   }
-  return { processed };
+  return { processed, checked, failed };
 }
