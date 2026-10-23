@@ -16,6 +16,8 @@ import {
   Check,
   Clock3,
   LoaderCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   type Application,
@@ -194,6 +196,15 @@ function Detail({
             onClick={() => void save({ starred: !a.starred })}
           >
             <Star size={19} fill={a.starred ? "currentColor" : "none"} />
+          </button>
+          <button
+            className={`icon-button ${a.isRead ? "" : "is-unread"}`}
+            aria-label={a.isRead ? "Mark reply unread" : "Mark reply read"}
+            title={a.isRead ? "Mark unread" : "Mark read"}
+            disabled={busy}
+            onClick={() => void save({ isRead: !a.isRead })}
+          >
+            {a.isRead ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
           <button className="icon-button" onClick={onClose} aria-label="Close details">
             <X size={21} />

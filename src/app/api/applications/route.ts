@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticate, userRef, responseError, AppError } from "@/lib/server/core";
-import { assessmentStageStatus } from "@/lib/domain";
+import { assessmentStageStatus, linkedInApplicationDetails } from "@/lib/domain";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
   try {
@@ -24,9 +24,17 @@ export async function GET(request: Request) {
             application.status,
             application.manualStatus,
           );
-          return status === application.status
-            ? application
-            : { ...application, status, aiStatus: status };
+          const linkedinDetails = linkedInApplicationDetails(application.subject || "");
+          return {
+            ...application,
+            ...(status !== application.status ? { status, aiStatus: status } : {}),
+            ...(linkedinDetails && application.role?.toLowerCase() === "role not specified"
+              ? { role: linkedinDetails.role }
+              : {}),
+            ...(linkedinDetails && application.company?.toLowerCase() === "unknown company"
+              ? { company: linkedinDetails.company }
+              : {}),
+          };
         }),
         cursor: page.size === 200 ? page.docs.at(-1)!.id : null,
       },

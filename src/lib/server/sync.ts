@@ -93,6 +93,7 @@ export async function recordMail(
       nextAction: classification.nextAction,
       deadline: existing?.deadline || classification.deadline,
       starred: existing?.starred || false,
+      isRead: latest ? false : existing?.isRead || false,
       archived: existing?.archived || false,
       trashed: existing?.trashed || false,
       notes: existing?.notes || "",

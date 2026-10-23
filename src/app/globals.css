@@ -2746,7 +2746,7 @@ html[data-theme="dark"] .attention-icon {
 .list-heading,
 .application-list-row {
   display: grid;
-  grid-template-columns: minmax(200px, 2.5fr) 1.3fr 1fr 0.6fr 35px;
+  grid-template-columns: minmax(200px, 2.5fr) 1.3fr 1fr 0.6fr 35px 35px;
   gap: 17px;
   align-items: center;
   padding: 16px 18px;
@@ -3962,7 +3962,7 @@ html[data-theme="dark"] .attention-icon {
   }
   .list-heading,
   .application-list-row {
-    grid-template-columns: minmax(160px, 2fr) 1.1fr 1fr 28px;
+    grid-template-columns: minmax(160px, 2fr) 1.1fr 1fr 30px 30px;
     gap: 10px;
     padding: 14px;
   }
@@ -4548,7 +4548,7 @@ html[data-theme="dark"] .attention-icon {
   }
   .list-heading,
   .application-list-row {
-    grid-template-columns: minmax(180px, 2fr) 1fr 1fr 30px;
+    grid-template-columns: minmax(180px, 2fr) 1fr 1fr 30px 30px;
   }
   .list-date {
     font-size: 10px;
@@ -4992,17 +4992,19 @@ html[data-theme="dark"] .attention-icon {
     gap: 5px;
   }
   .application-list-row {
-    grid-template-columns: minmax(120px, 1fr) 103px 25px;
+    grid-template-columns: minmax(120px, 1fr) 103px 25px 25px;
     gap: 8px;
     padding: 14px 10px;
   }
   .list-heading {
-    grid-template-columns: minmax(120px, 1fr) 103px 25px;
+    grid-template-columns: minmax(120px, 1fr) 103px 25px 25px;
     gap: 8px;
     padding: 13px 10px;
     font-size: 7px;
   }
   .list-heading > span:nth-child(3),
+  .list-heading > span:nth-child(4),
+  .list-language,
   .list-date {
     display: none;
   }
@@ -5597,7 +5599,7 @@ html[data-theme="dark"] .attention-icon {
 .compact-card-open {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 9px;
   padding: 0;
   flex: 1;
   min-width: 0;
@@ -5625,6 +5627,22 @@ html[data-theme="dark"] .attention-icon {
   font-weight: 600;
   line-height: 1.6;
   overflow-wrap: anywhere;
+}
+.unread-indicator {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+.compact-card.is-unread .compact-card-copy strong,
+.application-list-row.is-unread .list-company strong {
+  font-weight: 750;
+}
+.compact-card .read-button.is-unread,
+.application-list-row .icon-button.is-unread {
+  color: var(--primary);
 }
 .compact-card-copy time {
   display: block;

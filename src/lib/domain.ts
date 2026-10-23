@@ -22,6 +22,8 @@ const assessmentStagePattern =
   /(?:initial\s+(?:assessment|evaluation|screening)|preliminary\s+(?:assessment|evaluation)|(?:online|technical|skills?)\s+(?:assessment|test)|(?:invited|selected|shortlisted|moved)\s+(?:to|for)\s+(?:the\s+)?(?:next\s+)?(?:assessment|evaluation|stage)|ارزیابی\s+(?:اولیه|تخصصی|فنی)|بررسی\s+اولیه|(?:به|برای)\s+مرحله\s+(?:ارزیابی|بررسی)|آزمون\s+(?:آنلاین|فنی|تخصصی)|تست\s+(?:آنلاین|فنی|تخصصی)|erste\s+(?:bewertung|auswahl)|eignungstest|testaufgabe|évaluation\s+(?:initiale|technique)|prueba\s+(?:técnica|de\s+selección))/i;
 const viewedReceiptPattern =
   /(?:(?:application|résumé|resume|cv|profile).{0,100}(?:viewed|seen|opened)|(?:viewed|seen|opened).{0,100}(?:application|résumé|resume|cv|profile)|رزومه.{0,120}(?:مشاهده|دیده)\s*(?:شد|شده|گردید|شده است)?|(?:مشاهده|دیده)\s*(?:شد|شده|گردید).{0,120}رزومه)/i;
+const explicitRejectionPattern =
+  /(?:\b(?:we|i|the team|our hiring team)\b.{0,180}\b(?:will not be moving forward|won't be moving forward|will not move forward|have decided not to move forward|decided not to move forward|are unable to move forward|cannot move forward|can't move forward|regret to inform|regret to let you know|not selected|not be progressing|will not proceed|declined your application)\b|\b(?:unfortunately|regretfully)\b.{0,180}\b(?:not moving forward|not selected|unable to proceed|will not proceed|declined)\b|\byour application\b.{0,100}\b(?:was rejected|has been rejected|was declined|has been declined)\b|\babsage\b|\b(?:leider|bedauern)\b.{0,160}\b(?:bewerbung|bewerbungsprozess)\b.{0,100}\b(?:nicht|keine)\b.{0,40}\b(?:weiter|berücksichtigen|fortfahren)\b)/i;
 const explicitOutcomePattern =
   /\b(?:interview|offer|shortlisted|not selected|rejected|declined|assessment|test|next step|eignungstest|abgelehnt|angebot|vorstellungsgespräch|einladung|zusage|entrevista|entretien)\b|مصاحبه|دعوت|منتخب|انتخاب|پذیرش|قبول|رد|عدم انتخاب|ارزیابی|آزمون|مرحله|استخدام|پیشنهاد شغلی/i;
 
@@ -33,6 +35,7 @@ export function assessmentStageStatus(text: string, status: Status, manualStatus
     .replace(/[ي]/g, "ی")
     .replace(/[ك]/g, "ک")
     .replace(/\s+/g, " ");
+  if (explicitRejectionPattern.test(normalized)) return "rejected";
   if (assessmentStagePattern.test(normalized)) return "next_step";
   if (
     status === "review" &&
@@ -41,6 +44,13 @@ export function assessmentStageStatus(text: string, status: Status, manualStatus
   )
     return "received";
   return status;
+}
+export function linkedInApplicationDetails(subject: string) {
+  const match = subject.match(/^\s*(?:your\s+)?application\s+to\s+(.+?)\s+at\s+(.+?)\s*$/i);
+  if (!match) return null;
+  const role = match[1].replace(/\s+[\d.,]+\s*(?:€|eur|£|gbp|\$|usd)(?=\s|$)/gi, "").trim();
+  const company = match[2].trim().replace(/[.!?]+$/, "");
+  return role && company ? { role: role.slice(0, 200), company: company.slice(0, 160) } : null;
 }
 export const reviewLane: { id: string; label: string; statuses: Status[]; caption: string } = {
   id: "review",
@@ -84,6 +94,7 @@ export interface Application {
   confidence: number;
   language: string;
   receivedAt: string;
+  isRead?: boolean;
   nextAction: string;
   deadline: string | null;
   starred: boolean;
@@ -129,6 +140,7 @@ export const applicationPatchSchema = z
     starred: z.boolean().optional(),
     archived: z.boolean().optional(),
     trashed: z.boolean().optional(),
+    isRead: z.boolean().optional(),
     notes: z.string().max(5000).optional(),
     deadline: z.union([z.iso.date(), z.null()]).optional(),
   })

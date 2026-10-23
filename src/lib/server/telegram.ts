@@ -293,7 +293,7 @@ export function formatTelegramNotification(data: {
     "📝 WHAT IT SAYS",
     summary,
     "",
-    `↗ Open your applications: ${appURL()}`,
+    `↗ Open your applications: ${appURL()}/app/applications`,
   ]
     .filter(Boolean)
     .join("\n");

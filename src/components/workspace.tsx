@@ -27,6 +27,8 @@ import {
   ShieldCheck,
   LogOut,
   CircleHelp,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Brand, TelegramBrandMark, ThemeToggle } from "./brand";
 import { AccountMenu } from "./account-menu";
@@ -206,31 +208,30 @@ export function Workspace({
     mutationFn: ({ id, patch }: { id: string; patch: ApplicationPatch }) =>
       api(`/api/applications/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
     onMutate: async ({ id, patch }) => {
-      if (typeof patch.starred !== "boolean") return;
       const key = ["workspace", user?.uid] as const;
       await queryClient.cancelQueries({ queryKey: key });
       const current = queryClient.getQueryData<WorkspaceData>(key);
-      const previousStarred = current?.applications.find((item) => item.id === id)?.starred;
+      const previous = current?.applications.find((item) => item.id === id);
       queryClient.setQueryData<WorkspaceData>(key, (data) =>
         data
           ? {
               ...data,
               applications: data.applications.map((item) =>
-                item.id === id ? { ...item, starred: patch.starred! } : item,
+                item.id === id ? { ...item, ...patch } : item,
               ),
             }
           : data,
       );
-      return { id, previousStarred, key };
+      return { id, previous, key };
     },
     onError: (_error, _variables, context) => {
-      if (context?.previousStarred === undefined) return;
+      if (!context?.previous) return;
       queryClient.setQueryData<WorkspaceData>(context.key, (data) =>
         data
           ? {
               ...data,
               applications: data.applications.map((item) =>
-                item.id === context.id ? { ...item, starred: context.previousStarred! } : item,
+                item.id === context.id ? context.previous! : item,
               ),
             }
           : data,
@@ -248,6 +249,13 @@ export function Workspace({
       return;
     }
     await mutation.mutateAsync({ id, patch: p });
+  }
+  function openApplication(application: Application) {
+    setSelected(application.id);
+    if (!application.isRead)
+      void patch(application.id, { isRead: true }).catch((requestError) =>
+        setError(requestError.message),
+      );
   }
   async function permanentlyDelete(id: string) {
     if (demo) return;
@@ -1025,7 +1033,12 @@ export function Workspace({
                                 <ApplicationCard
                                   key={a.id}
                                   a={a}
-                                  onOpen={() => setSelected(a.id)}
+                                  onOpen={() => openApplication(a)}
+                                  onToggleRead={() =>
+                                    void patch(a.id, { isRead: !a.isRead }).catch((e) =>
+                                      setError(e.message),
+                                    )
+                                  }
                                   onTrash={
                                     tab === "trash"
                                       ? undefined
@@ -1089,10 +1102,15 @@ export function Workspace({
                       <span>RECEIVED</span>
                       <span>LANGUAGE</span>
                       <span />
+                      <span />
                     </div>
                     {filtered.map((a) => (
-                      <div key={a.id} className="application-list-row">
-                        <button className="list-company" onClick={() => setSelected(a.id)}>
+                      <div
+                        key={a.id}
+                        className={`application-list-row ${a.isRead ? "is-read" : "is-unread"}`}
+                      >
+                        <button className="list-company" onClick={() => openApplication(a)}>
+                          {!a.isRead && <span className="unread-indicator" aria-hidden="true" />}
                           <span className={`company-avatar ${a.color || "blue"}`}>
                             {a.company.slice(0, 1)}
                           </span>
@@ -1101,7 +1119,7 @@ export function Workspace({
                             <span dir="auto">{a.role}</span>
                           </span>
                         </button>
-                        <button className="list-status" onClick={() => setSelected(a.id)}>
+                        <button className="list-status" onClick={() => openApplication(a)}>
                           <span className={`status-badge ${a.status}`}>
                             <span />
                             {statusLabels[a.status]}
@@ -1111,6 +1129,18 @@ export function Workspace({
                         <span className="list-language language-tag">
                           {a.language.toUpperCase()}
                         </span>
+                        <button
+                          className={`icon-button ${a.isRead ? "" : "is-unread"}`}
+                          onClick={() =>
+                            void patch(a.id, { isRead: !a.isRead }).catch((e) =>
+                              setError(e.message),
+                            )
+                          }
+                          title={a.isRead ? "Mark unread" : "Mark read"}
+                          aria-label={`${a.isRead ? "Mark unread" : "Mark read"} ${a.company}`}
+                        >
+                          {a.isRead ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
                         <button
                           className={`icon-button ${a.starred ? "is-starred" : ""}`}
                           onClick={() =>
@@ -1187,6 +1217,7 @@ export function Workspace({
 function ApplicationCard({
   a,
   onOpen,
+  onToggleRead,
   onStar,
   onTrash,
   onPermanentDelete,
@@ -1194,6 +1225,7 @@ function ApplicationCard({
 }: {
   a: Application;
   onOpen: () => void;
+  onToggleRead: () => void;
   onStar: () => void;
   onTrash?: () => Promise<void>;
   onPermanentDelete?: () => Promise<void>;
@@ -1202,13 +1234,16 @@ function ApplicationCard({
   const [confirmAction, setConfirmAction] = useState<"move" | "delete" | null>(null);
   const [workingAction, setWorkingAction] = useState<"move" | "restore" | "delete" | null>(null);
   return (
-    <article className={`application-card compact-card card-${a.status}`}>
+    <article
+      className={`application-card compact-card card-${a.status} ${a.isRead ? "is-read" : "is-unread"}`}
+    >
       <button
         className="compact-card-open"
         onClick={onOpen}
         aria-label={`View details for ${a.company}`}
         title={`${a.company} · ${a.role}`}
       >
+        {!a.isRead && <span className="unread-indicator" aria-label="Unread" title="Unread" />}
         <span className="compact-card-copy">
           <strong dir="auto">{a.company}</strong>
           <time dateTime={a.receivedAt}>
@@ -1219,6 +1254,15 @@ function ApplicationCard({
         </span>
       </button>
       <div className="compact-card-actions">
+        <button
+          className={`icon-button read-button ${a.isRead ? "" : "is-unread"}`}
+          aria-label={`${a.isRead ? "Mark unread" : "Mark read"} ${a.company}`}
+          title={a.isRead ? "Mark unread" : "Mark read"}
+          disabled={!!workingAction}
+          onClick={onToggleRead}
+        >
+          {a.isRead ? <EyeOff size={14} /> : <Eye size={14} />}
+        </button>
         <button
           className={`icon-button star-button ${a.starred ? "is-starred" : ""}`}
           aria-label={`${a.starred ? "Unsave" : "Save"} ${a.company}`}
