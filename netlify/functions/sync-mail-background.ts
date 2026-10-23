@@ -17,13 +17,16 @@ export default async (request: Request) => {
     const result =
       process.env.MAIL_PROCESSING_ENABLED === "true"
         ? await scheduledSync(36)
-        : { processed: 0 };
+        : { processed: 0, checked: 0, failed: 0 };
     const telegram = await drainTelegramOutbox(30);
     console.info("Background processing finished.", {
       inboxMessagesProcessed: result.processed,
-      inboxConnectionsChecked: "checked" in result ? result.checked : 0,
-      inboxConnectionsFailed: "failed" in result ? result.failed : 0,
+      inboxConnectionsChecked: result.checked,
+      inboxConnectionsFailed: result.failed,
+      telegramOutboxDue: telegram.pending,
+      telegramDeliveriesAttempted: telegram.attempted,
       telegramNotificationsSent: telegram.sent,
+      telegramDeliveryFailures: telegram.failed,
     });
   } catch (error) {
     console.error("Background mail sync paused; queued work is retained.", {

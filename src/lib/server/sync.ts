@@ -259,7 +259,7 @@ export async function syncConnection(id: string, expectedUID?: string, force = f
           throttle.data()?.until || 0,
           Date.now() +
             (phase === "live" && connection.importComplete && pageDone && page.complete
-              ? 15 * 60000
+              ? 60000
               : 1000),
         ),
         lockUntil: 0,
@@ -298,7 +298,8 @@ export async function syncConnection(id: string, expectedUID?: string, force = f
 }
 
 export async function scheduledSync(maxMessages = 1) {
-  if (process.env.MAIL_PROCESSING_ENABLED !== "true") return { processed: 0 };
+  if (process.env.MAIL_PROCESSING_ENABLED !== "true")
+    return { processed: 0, checked: 0, failed: 0 };
   // Earliest due mailbox first. The composite index is tracked in firestore.indexes.json.
   let processed = 0;
   let checked = 0;

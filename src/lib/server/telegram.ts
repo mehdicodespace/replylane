@@ -300,7 +300,7 @@ export function formatTelegramNotification(data: {
 }
 
 export async function drainTelegramOutbox(limit = 20) {
-  if (!telegramConfigured()) return { sent: 0 };
+  if (!telegramConfigured()) return { sent: 0, failed: 0, pending: 0, attempted: 0 };
   const due = await db()
     .collection("telegramOutbox")
     .where("nextAttemptAt", "<=", Date.now())
@@ -308,6 +308,8 @@ export async function drainTelegramOutbox(limit = 20) {
     .limit(limit)
     .get();
   let sent = 0;
+  let failed = 0;
+  let attempted = 0;
   for (const item of due.docs) {
     const uid = item.data().uid as string;
     const lock = randomBytes(12).toString("hex");
@@ -323,6 +325,7 @@ export async function drainTelegramOutbox(limit = 20) {
       return { data: current.data()!, chatId };
     });
     if (!claimed) continue;
+    attempted++;
     const data = claimed.data;
     const body = formatTelegramNotification(data);
     try {
@@ -330,6 +333,7 @@ export async function drainTelegramOutbox(limit = 20) {
       await item.ref.delete();
       sent++;
     } catch {
+      failed++;
       const attempts = Number(data.attempts || 0) + 1;
       if (attempts >= 8) {
         await item.ref.delete();
@@ -343,5 +347,5 @@ export async function drainTelegramOutbox(limit = 20) {
       }
     }
   }
-  return { sent };
+  return { sent, failed, pending: due.size, attempted };
 }
