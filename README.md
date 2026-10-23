@@ -31,7 +31,7 @@ Screens below use sample data and do not show a connected personal inbox.
 - Group employer replies into application cards and organize them by status, including moving forward, offers, rejected, and needs review.
 - Read original messages alongside concise English summaries and suggested next steps, including for replies written in other languages.
 - Search, filter, save, annotate, set deadlines, archive, restore, and move unwanted cards to Trash.
-- Receive optional Telegram notifications for newly processed replies.
+- Receive optional Telegram notifications for interviews, next steps, offers, rejections, and replies needing review. Application receipts stay quiet.
 - Use the responsive board or list view, with light and dark themes.
 
 Mailbox access is read-only. Replylane does not send, move, delete, or mark messages as read. Attachments are not submitted for classification. Message text is shortened and recognized email addresses and links are redacted before it is sent to the configured processing provider; redaction may not catch every personal detail. See the [privacy notice](src/app/privacy/page.tsx) and [setup guide](docs/SETUP.md) before connecting real accounts.

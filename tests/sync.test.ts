@@ -32,6 +32,7 @@ vi.mock("@/lib/server/providers", () => ({
 import { recordMail, syncConnection, scheduledSync } from "@/lib/server/sync";
 import { AppError, hash } from "@/lib/server/core";
 import { requestHistoryImport } from "@/lib/server/history";
+import { drainTelegramOutbox } from "@/lib/server/telegram";
 const result: Classification = {
   relevant: true,
   relevanceConfidence: 0.99,
@@ -222,6 +223,38 @@ describe("durable mail processing", () => {
     expect(
       [...mocks.database.state.keys()].filter((k: string) => k.includes("/events/")),
     ).toHaveLength(2);
+  });
+  it("keeps received replies on the board without queuing Telegram alerts", async () => {
+    mocks.database.state.set("users/alice", { telegram: { chatId: "123456" } });
+    await recordMail("alice", "c1", mail("receipt"), { ...result, status: "received" }, "live");
+    expect(
+      mocks.database.state.get(`users/alice/applications/${hash("c1:thread1")}`),
+    ).toMatchObject({
+      status: "received",
+    });
+    expect(
+      [...mocks.database.state.keys()].filter((key) => key.startsWith("telegramOutbox/")),
+    ).toHaveLength(0);
+  });
+  it("discards previously queued receipt alerts without contacting Telegram", async () => {
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "test-token");
+    vi.stubEnv("TELEGRAM_BOT_USERNAME", "test_bot");
+    vi.stubEnv("TELEGRAM_WEBHOOK_SECRET", "test-secret");
+    mocks.database.state.set("users/alice", { telegram: { chatId: "123456" } });
+    mocks.database.state.set("telegramOutbox/old-receipt", {
+      uid: "alice",
+      status: "received",
+      nextAttemptAt: 0,
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      expect(await drainTelegramOutbox()).toMatchObject({ sent: 0, attempted: 0 });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(mocks.database.state.has("telegramOutbox/old-receipt")).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
   it("stores a viewed-only Persian application notice as received", async () => {
     await recordMail(

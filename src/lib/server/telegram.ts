@@ -247,6 +247,7 @@ export function queueTelegramNotification(
     receivedAt: string;
   },
 ) {
+  if (notification.status === "received") return;
   tx.create(
     db()
       .collection("telegramOutbox")
@@ -317,7 +318,13 @@ export async function drainTelegramOutbox(limit = 20) {
       const [current, owner] = await Promise.all([tx.get(item.ref), tx.get(userRef(uid))]);
       if (!current.exists || (current.data()?.lockUntil || 0) > Date.now()) return null;
       const chatId = owner.data()?.telegram?.chatId as string | undefined;
-      if (!owner.exists || owner.data()?.deleting || !chatId) {
+      // Drop receipts queued before receipt notifications were disabled, too.
+      if (
+        current.data()?.status === "received" ||
+        !owner.exists ||
+        owner.data()?.deleting ||
+        !chatId
+      ) {
         tx.delete(item.ref);
         return null;
       }

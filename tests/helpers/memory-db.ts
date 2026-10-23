@@ -71,6 +71,7 @@ export function memoryDB() {
             return ref.set(data);
           },
           update: (ref: any, data: Data) => ref.update(data),
+          delete: (ref: any) => ref.delete(),
         }),
       );
       queue = result.catch(() => {});

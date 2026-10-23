@@ -288,7 +288,7 @@ export function Settings({
         </section>
         <section className="settings-card telegram-settings-card">
           <h3>Telegram notifications</h3>
-          <p>Get a private message for each new reply, with its category and a short summary.</p>
+          <p>Get important replies with a short summary. Application receipts stay quiet.</p>
           {demo ? (
             <Link href="/sign-up" className="text-link">
               Create an account to connect Telegram ↗
