@@ -305,13 +305,22 @@ export function Connections({
                         </p>
                       </>
                     )}
-                    {c.status === "connected" && c.nextSyncAt && c.nextSyncAt > Date.now() && (
-                      <p>
-                        Next check:{" "}
-                        {new Date(c.nextSyncAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                    {c.status === "connected" && (
+                      <p title="Automatic checks run every minute. Connection errors or processing limits can delay a check.">
+                        {c.syncing
+                          ? "Checking now…"
+                          : c.nextSyncAt && c.nextSyncAt > Date.now()
+                            ? `${c.error ? "Retry after" : "Next automatic check"}: ${new Date(
+                                c.nextSyncAt,
+                              ).toLocaleString([], {
+                                ...(new Date(c.nextSyncAt).toDateString() !==
+                                new Date().toDateString()
+                                  ? ({ month: "short", day: "numeric" } as const)
+                                  : {}),
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}`
+                            : "Waiting for the next automatic check…"}
                       </p>
                     )}
                   </div>

@@ -106,11 +106,7 @@ export async function recordMail(
     // cursor found it; older backfill remains quiet.
     const connectedAt = connection.data()?.createdAt as string | undefined;
     const receivedAfterConnection = Boolean(connectedAt && mail.receivedAt >= connectedAt);
-    if (
-      (phase === "live" || receivedAfterConnection) &&
-      latest &&
-      owner.data()?.telegram?.chatId
-    ) {
+    if ((phase === "live" || receivedAfterConnection) && latest && owner.data()?.telegram?.chatId) {
       queueTelegramNotification(tx, uid, `${connectionId}:${mail.id}`, {
         company: classification.company,
         role: classification.role,
@@ -257,10 +253,11 @@ export async function syncConnection(id: string, expectedUID?: string, force = f
         failures: 0,
         nextSyncAt: Math.max(
           throttle.data()?.until || 0,
-          Date.now() +
-            (phase === "live" && connection.importComplete && pageDone && page.complete
-              ? 60000
-              : 1000),
+          // Match the cron's clock minute so finishing a few seconds after a
+          // tick doesn't make this inbox miss the following minute's run.
+          phase === "live" && connection.importComplete && pageDone && page.complete
+            ? (Math.floor(Date.now() / 60000) + 1) * 60000
+            : Date.now() + 1000,
         ),
         lockUntil: 0,
         lockId: "",

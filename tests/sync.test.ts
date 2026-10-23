@@ -160,7 +160,7 @@ describe("durable mail processing", () => {
     mocks.classify
       .mockRejectedValueOnce(new AppError("Personal daily allowance", 429, "PERSONAL_BUDGET"))
       .mockResolvedValueOnce(result);
-    expect(await scheduledSync(1)).toEqual({ processed: 1 });
+    expect(await scheduledSync(1)).toEqual({ processed: 1, checked: 2, failed: 1 });
     expect(mocks.classify).toHaveBeenCalledTimes(2);
   });
   it("preserves a pause made while inference was in flight", async () => {
@@ -195,7 +195,7 @@ describe("durable mail processing", () => {
   });
   it("queues Telegram alerts for new live replies but keeps historical imports quiet", async () => {
     mocks.database.state.set("users/alice", { telegram: { chatId: "123456" } });
-    await recordMail("alice", "c1", mail("older"), result, "import");
+    await recordMail("alice", "c1", mail("older", "2026-10-01T10:00:00.000Z"), result, "import");
     await recordMail("alice", "c1", mail("live"), result, "live");
     const queued = [...mocks.database.state.entries()].filter(([path]) =>
       path.startsWith("telegramOutbox/"),
@@ -347,5 +347,29 @@ describe("durable mail processing", () => {
     await expect(syncConnection("c1", "alice")).rejects.toThrow("next sync is queued");
     await expect(syncConnection("c1", "alice", true)).resolves.toMatchObject({ processed: 0 });
     expect(mocks.gmailPage).toHaveBeenCalledTimes(1);
+  });
+  it("schedules a completed live check for the next cron minute, even near a minute boundary", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-10-23T12:00:55Z"));
+    try {
+      mocks.gmailPage.mockResolvedValue({ messages: [], cursor: null, complete: true });
+      await syncConnection("c1", "alice");
+      expect(mocks.database.state.get("connections/c1").nextSyncAt).toBe(
+        Date.parse("2026-10-23T12:01:00Z"),
+      );
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+  it("checks an inbox and queues a new offer alert without a signed-in browser", async () => {
+    vi.stubEnv("MAIL_PROCESSING_ENABLED", "true");
+    mocks.database.state.set("users/alice", { telegram: { chatId: "123456" } });
+    mocks.gmailPage.mockResolvedValue({ messages: [mail("offer")], cursor: null, complete: true });
+    mocks.classify.mockResolvedValueOnce({ ...result, status: "offer" });
+    expect(await scheduledSync(1)).toEqual({ processed: 1, checked: 1, failed: 0 });
+    const queued = [...mocks.database.state.entries()].filter(([key]) =>
+      key.startsWith("telegramOutbox/"),
+    );
+    expect(queued).toHaveLength(1);
+    expect(queued[0][1]).toMatchObject({ uid: "alice", status: "offer" });
   });
 });

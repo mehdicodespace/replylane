@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "postinstall": "node scripts/patch-server-dependencies.cjs",
-    "prebuild": "node scripts/patch-server-dependencies.cjs",
+    "prebuild": "node scripts/patch-server-dependencies.cjs && npm run test:runtime",
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:runtime": "node --no-experimental-require-module --no-experimental-detect-module scripts/check-server-runtime.cjs",
     "test:watch": "vitest",
     "evaluate:ai": "vitest run --config vitest.live.config.ts",
     "format": "prettier --write .",
@@ -36,7 +37,7 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "react-hook-form": "^7.62.0",
-    "sanitize-html": "^2.18.1",
+    "sanitize-html": "2.18.1",
     "zod": "^4.1.0",
     "zustand": "^5.0.8"
   },
@@ -51,6 +52,7 @@
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@types/sanitize-html": "^2.16.2",
+    "esbuild": "0.28.2",
     "prettier": "^3.9.10",
     "typescript": "^5.9.0",
     "vitest": "^4.0.0"

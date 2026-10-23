@@ -12,7 +12,8 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  external_node_modules = ["firebase-admin", "imapflow", "mailparser"]
+  external_node_modules = ["firebase-admin", "imapflow", "mailparser", "sanitize-html"]
+  included_files = ["node_modules/sanitize-html/replylane-htmlparser2.cjs"]
 
 [functions."sync-mail"]
   schedule = "*/1 * * * *"
